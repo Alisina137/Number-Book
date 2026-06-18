@@ -101,7 +101,21 @@ router.post("/books/:id/generate-blueprint", async (req, res): Promise<void> => 
   await db.delete(entriesTable).where(eq(entriesTable.bookId, book.id));
 
   // Generate titles via AI
-  const titles = await generateBlueprint(book, openai);
+  let titles: string[];
+  try {
+    titles = await generateBlueprint(book, openai);
+  } catch (err: unknown) {
+    const status = (err as { status?: number }).status ?? 500;
+    if (status === 429) {
+      res.status(429).json({ error: "OpenAI quota exceeded. Please check your API key billing at platform.openai.com." });
+    } else if (status === 401) {
+      res.status(401).json({ error: "Invalid OpenAI API key. Please update your OPENAI_API_KEY secret." });
+    } else {
+      const message = (err as { message?: string }).message ?? "Unknown error";
+      res.status(500).json({ error: `AI generation failed: ${message}` });
+    }
+    return;
+  }
 
   // Insert entries
   const entryRows = titles.map((title, index) => ({

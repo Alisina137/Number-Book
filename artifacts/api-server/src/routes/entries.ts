@@ -68,18 +68,32 @@ router.post("/books/:bookId/entries/:entryId/generate", async (req, res): Promis
   let attempts = 0;
   const maxAttempts = 3;
 
-  while (attempts < maxAttempts) {
-    attempts++;
-    const prompt = buildContentPrompt(book, entry.title);
-    const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",
-      max_completion_tokens: 1024,
-      messages: [{ role: "user", content: prompt }],
-    });
-    content = response.choices[0]?.message?.content ?? "";
-    wordCount = countWords(content);
-
-    if (wordCount >= book.minWords && wordCount <= book.maxWords) break;
+  try {
+    while (attempts < maxAttempts) {
+      attempts++;
+      const prompt = buildContentPrompt(book, entry.title);
+      const response = await openai.chat.completions.create({
+        model: "gpt-5-mini",
+        max_completion_tokens: 1024,
+        messages: [{ role: "user", content: prompt }],
+      });
+      content = response.choices[0]?.message?.content ?? "";
+      wordCount = countWords(content);
+      if (wordCount >= book.minWords && wordCount <= book.maxWords) break;
+    }
+  } catch (err: unknown) {
+    // Mark entry as failed
+    await db.update(entriesTable).set({ status: "failed" }).where(eq(entriesTable.id, entry.id));
+    const status = (err as { status?: number }).status ?? 500;
+    if (status === 429) {
+      res.status(429).json({ error: "OpenAI quota exceeded. Please check your API key billing at platform.openai.com." });
+    } else if (status === 401) {
+      res.status(401).json({ error: "Invalid OpenAI API key. Please update your OPENAI_API_KEY secret." });
+    } else {
+      const message = (err as { message?: string }).message ?? "Unknown error";
+      res.status(500).json({ error: `AI generation failed: ${message}` });
+    }
+    return;
   }
 
   const [updated] = await db

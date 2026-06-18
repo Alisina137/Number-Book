@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation, useParams } from "wouter";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -11,62 +11,62 @@ import {
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { BookOpen, ArrowRight, Loader2, RefreshCw, CheckCircle } from "lucide-react";
+import { BookOpen, ArrowRight, Loader2, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 
 export default function Blueprint() {
   const { id } = useParams<{ id: string }>();
   const bookId = Number(id);
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
-  const [hasTriggered, setHasTriggered] = useState(false);
+
+  // useRef so it survives re-renders without re-triggering the effect
+  const hasAutoTriggered = useRef(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { data: book, isLoading: bookLoading } = useGetBook(bookId, {
     query: { enabled: !!bookId, queryKey: getGetBookQueryKey(bookId) },
   });
 
   const { data: entries, isLoading: entriesLoading } = useListEntries(bookId, {
-    query: { enabled: !!bookId && book?.status !== "setup", queryKey: getListEntriesQueryKey(bookId) },
+    query: {
+      enabled: !!bookId && !!book && book.status !== "setup",
+      queryKey: getListEntriesQueryKey(bookId),
+    },
   });
 
-  const generateBlueprint = useGenerateBlueprint();
+  const generateBlueprintMutation = useGenerateBlueprint();
   const updateBook = useUpdateBook();
 
-  // Auto-trigger if book is in setup state and we haven't triggered yet
-  useEffect(() => {
-    if (book && book.status === "setup" && !hasTriggered && !generateBlueprint.isPending) {
-      setHasTriggered(true);
-      generateBlueprint.mutate(
-        { id: bookId },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: getGetBookQueryKey(bookId) });
-            queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey(bookId) });
-          },
-          onError: () => {
-            toast({ title: "Blueprint generation failed", description: "Please try again", variant: "destructive" });
-          },
-        }
-      );
-    }
-  }, [book, hasTriggered]);
-
-  const handleRegenerate = () => {
-    setHasTriggered(true);
-    generateBlueprint.mutate(
+  const runGenerate = () => {
+    setErrorMessage(null);
+    generateBlueprintMutation.mutate(
       { id: bookId },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getGetBookQueryKey(bookId) });
           queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey(bookId) });
-          toast({ title: "Blueprint regenerated" });
         },
-        onError: () => {
-          toast({ title: "Failed to regenerate", variant: "destructive" });
+        onError: (err: unknown) => {
+          const msg =
+            (err as { response?: { data?: { error?: string } } })?.response?.data?.error ??
+            (err as { message?: string })?.message ??
+            "Blueprint generation failed. Please try again.";
+          setErrorMessage(msg);
         },
       }
     );
+  };
+
+  // Auto-trigger ONCE when arriving fresh from setup — use ref to survive remounts
+  useEffect(() => {
+    if (book && book.status === "setup" && !hasAutoTriggered.current && !generateBlueprintMutation.isPending) {
+      hasAutoTriggered.current = true;
+      runGenerate();
+    }
+  }, [book?.status]);
+
+  const handleRegenerate = () => {
+    runGenerate();
   };
 
   const handleProceed = () => {
@@ -81,7 +81,7 @@ export default function Blueprint() {
     );
   };
 
-  const isGenerating = generateBlueprint.isPending;
+  const isGenerating = generateBlueprintMutation.isPending;
   const hasEntries = entries && entries.length > 0;
 
   if (bookLoading) {
@@ -124,8 +124,37 @@ export default function Blueprint() {
           )}
         </AnimatePresence>
 
+        {/* Error state */}
+        <AnimatePresence>
+          {!isGenerating && errorMessage && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="bg-destructive/10 border border-destructive/30 rounded-xl p-6 mb-6"
+            >
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-destructive flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-destructive text-sm">Generation failed</p>
+                  <p className="text-sm text-muted-foreground mt-1">{errorMessage}</p>
+                </div>
+              </div>
+              <Button
+                className="mt-4 w-full"
+                variant="outline"
+                onClick={handleRegenerate}
+                data-testid="button-retry"
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Try Again
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Entry list */}
-        {!isGenerating && hasEntries && (
+        {!isGenerating && !errorMessage && hasEntries && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
             <div className="bg-card border border-card-border rounded-xl overflow-hidden mb-6">
               <div className="px-5 py-3 border-b border-border flex items-center justify-between">
@@ -135,7 +164,8 @@ export default function Blueprint() {
                 </div>
                 <button
                   onClick={handleRegenerate}
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors"
+                  disabled={isGenerating}
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors disabled:opacity-40"
                   data-testid="button-regenerate-blueprint"
                 >
                   <RefreshCw className="w-3 h-3" />
@@ -174,7 +204,8 @@ export default function Blueprint() {
           </motion.div>
         )}
 
-        {!isGenerating && !hasEntries && !entriesLoading && book?.status !== "setup" && (
+        {/* Manual generate button when not loading and no entries and no error */}
+        {!isGenerating && !errorMessage && !hasEntries && !entriesLoading && book?.status !== "setup" && (
           <div className="text-center py-16">
             <p className="text-muted-foreground mb-4">No entries found. Try generating the blueprint.</p>
             <Button onClick={handleRegenerate} data-testid="button-generate-now">
