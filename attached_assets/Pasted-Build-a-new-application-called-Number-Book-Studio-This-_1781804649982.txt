@@ -1,0 +1,514 @@
+Build a new application called **Number Book Studio**. This application is completely separate from chapter-based book generation. It is designed for books where every entry is independent and self-contained.
+
+Examples:
+
+* Fun Facts Books
+* Trivia Books
+* Joke Books
+* Riddle Books
+* Productivity Tips Books
+* Success Principles Books
+* Life Lessons Books
+* Q&A Books
+
+The application must use a 3-step workflow:
+
+# Step 1: Research
+
+Create a research form with the following fields:
+
+### Niche
+
+Examples:
+
+* Fun Facts
+* Trivia
+* Jokes
+* Riddles
+* Productivity Tips
+* Success Principles
+* Life Lessons
+* Story Prompts
+* Writing Prompts
+
+### Sub-Niche
+
+Examples:
+
+* Animal Facts
+* Space Facts
+* Geography Trivia
+* Dad Jokes
+* Productivity for Students
+
+### Deep Niche
+
+Examples:
+
+* Ocean Animal Facts
+* Solar System Facts
+* European Geography Trivia
+* Clean Dad Jokes
+* Study Productivity Tips
+
+### Number of Entries
+
+Examples:
+
+* 50
+* 100
+* 250
+* 500
+* 1000
+
+### Word Count Range Per Entry
+
+Examples:
+
+Minimum Words:
+25
+
+Maximum Words:
+75
+
+or
+
+Minimum Words:
+75
+
+Maximum Words:
+150
+
+### Audience
+
+Options:
+
+Children (4–10)
+
+Teenagers (11–16)
+
+Adults (17–50)
+
+Audience automatically determines difficulty level and vocabulary.
+
+Children:
+
+* Simple language
+* Short sentences
+* Easy concepts
+
+Teenagers:
+
+* Medium vocabulary
+* Moderate complexity
+
+Adults:
+
+* Full vocabulary
+* Advanced concepts allowed
+
+### Tone
+
+Options:
+
+* Educational
+* Funny
+* Inspirational
+* Professional
+* Casual
+
+---
+
+After the user clicks "Generate Blueprint":
+
+Generate the complete list of entry titles before any content is written.
+
+Example:
+
+1. Why Octopuses Have Three Hearts
+2. Why Honey Never Spoils
+3. Why Bananas Are Berries
+4. Why Sharks Rarely Get Sick
+
+...
+
+Store all entry titles in the database.
+
+This blueprint becomes the roadmap for the book.
+
+No content should be generated at this stage.
+
+---
+
+### Duplicate Prevention During Blueprint Creation
+
+Before saving the blueprint:
+
+* Detect duplicate topics
+* Detect near-duplicate topics
+* Remove duplicates automatically
+* Replace removed topics with unique alternatives
+
+The blueprint must contain only unique entries.
+
+---
+
+# Step 2: Write
+
+Create a dedicated writing interface.
+
+Display:
+
+Book Information
+
+* Niche
+* Sub-Niche
+* Deep Niche
+* Audience
+* Tone
+* Number of Entries
+
+---
+
+Display the blueprint list.
+
+Example:
+
+1. Why Octopuses Have Three Hearts
+2. Why Honey Never Spoils
+3. Why Bananas Are Berries
+
+Each entry must have:
+
+* Generate Button
+* Regenerate Button
+* Lock Button
+
+---
+
+### Generate Entry
+
+When Generate is clicked:
+
+Generate only that specific entry.
+
+Do not regenerate the entire book.
+
+The AI receives:
+
+* Book metadata
+* Current entry title
+* Audience
+* Tone
+* Word count range
+
+The AI returns content only for that entry.
+
+---
+
+### Regenerate Entry
+
+Allow regenerating only the selected entry.
+
+Do not affect any other entry.
+
+---
+
+### Lock Entry
+
+Once locked:
+
+* Content cannot be overwritten
+* Regenerate becomes disabled
+* Entry is protected
+
+---
+
+### Auto Save
+
+Every generated entry must save automatically.
+
+No manual save required.
+
+---
+
+### Progress Tracking
+
+Display:
+
+Total Entries
+
+Completed Entries
+
+Remaining Entries
+
+Completion Percentage
+
+Example:
+
+Total: 500
+
+Completed: 137
+
+Remaining: 363
+
+27.4% Complete
+
+Update in real time.
+
+---
+
+### Word Count Validation
+
+Validate every generated entry.
+
+If user selected:
+
+50–80 words
+
+The generated entry must remain inside that range.
+
+Automatically retry generation if outside range.
+
+---
+
+### Content Templates
+
+Templates must change automatically based on niche.
+
+Examples:
+
+Fun Facts:
+
+Title
+
+Fact Content
+
+Did You Know?
+
+---
+
+Trivia:
+
+Question
+
+Options A-D
+
+Correct Answer
+
+Explanation
+
+---
+
+Jokes:
+
+Title
+
+Joke Setup
+
+Punchline
+
+---
+
+Productivity Tips:
+
+Tip Title
+
+Explanation
+
+Action Step
+
+---
+
+Life Lessons:
+
+Lesson Title
+
+Lesson Explanation
+
+Practical Application
+
+---
+
+Story Prompts:
+
+Prompt Title
+
+Prompt Description
+
+Creative Twist
+
+---
+
+Writing Prompts:
+
+Prompt Title
+
+Prompt Description
+
+Writing Challenge
+
+---
+
+The application architecture must allow adding new templates easily.
+
+---
+
+# Step 3: Quality Control
+
+Create a dedicated quality tab.
+
+### Duplicate Content Detection
+
+Scan completed entries.
+
+Detect:
+
+* Exact duplicates
+* Near duplicates
+* Same concept written differently
+
+Flag suspicious entries.
+
+---
+
+### Audience Validation
+
+Verify content matches audience.
+
+Children:
+
+* No mature topics
+* No complex vocabulary
+* No inappropriate language
+
+Teenagers:
+
+* Age-appropriate content
+
+Adults:
+
+* No restrictions except platform safety
+
+---
+
+### Consistency Validation
+
+Verify all entries follow the selected template.
+
+Example:
+
+Every Productivity Tip must contain:
+
+* Tip Title
+* Explanation
+* Action Step
+
+Flag any entry that breaks structure.
+
+---
+
+### Word Count Validation
+
+Show:
+
+Expected Range
+
+Actual Count
+
+Status
+
+Pass / Fail
+
+---
+
+# Step 4: Finish
+
+Create a finish/export page.
+
+Automatically assemble the book.
+
+Structure:
+
+Title Page
+
+Copyright Page
+
+Introduction
+
+Table of Contents
+
+All Entries
+
+Conclusion (optional)
+
+About The Author
+
+---
+
+### DOCX Export
+
+Primary export format.
+
+Generate a professionally formatted DOCX file.
+
+Requirements:
+
+* Proper headings
+* Automatic page breaks
+* Clickable table of contents
+* Clean typography
+* KDP-friendly layout
+
+---
+
+### Additional Export Formats
+
+Support:
+
+* DOCX
+* PDF
+* TXT
+* Markdown
+
+DOCX remains the default.
+
+---
+
+### Book Statistics
+
+Display:
+
+Total Entries
+
+Total Word Count
+
+Average Words Per Entry
+
+Audience
+
+Tone
+
+Niche
+
+Sub-Niche
+
+Deep Niche
+
+Generation Date
+
+---
+
+# Technical Requirements
+
+* Modern responsive UI
+* Works on desktop and mobile
+* Auto-save enabled
+* Local database or project database support
+* Modular architecture
+* Entry-based generation only
+* Blueprint-based workflow
+* Fast loading
+* Clean navigation between Research, Write, Quality, and Finish
+
+The application must be optimized for creating KDP-ready numbering books where each entry is independent and does not depend on previous entries.
