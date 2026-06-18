@@ -1,22 +1,27 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Number Book Studio API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: books
+    description: Book management
+  - name: entries
+    description: Entry management
+  - name: quality
+    description: Quality control
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +29,467 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /books:
+    get:
+      operationId: listBooks
+      tags: [books]
+      summary: List all books
+      responses:
+        "200":
+          description: List of books
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Book"
+    post:
+      operationId: createBook
+      tags: [books]
+      summary: Create a new book
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+
+  /books/{id}:
+    get:
+      operationId: getBook
+      tags: [books]
+      summary: Get a book by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Book
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+        "404":
+          description: Not found
+    patch:
+      operationId: updateBook
+      tags: [books]
+      summary: Update a book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+    delete:
+      operationId: deleteBook
+      tags: [books]
+      summary: Delete a book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /books/{id}/generate-blueprint:
+    post:
+      operationId: generateBlueprint
+      tags: [books]
+      summary: Generate entry titles blueprint for a book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Blueprint generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+
+  /books/{id}/stats:
+    get:
+      operationId: getBookStats
+      tags: [books]
+      summary: Get book statistics (word counts, completion, etc.)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Book stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookStats"
+
+  /books/{id}/quality-report:
+    get:
+      operationId: getQualityReport
+      tags: [quality]
+      summary: Get quality control report for all entries in a book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Quality report
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QualityReport"
+
+  /books/{id}/export:
+    post:
+      operationId: exportBook
+      tags: [books]
+      summary: Assemble and export the book (returns download URL/data)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ExportRequest"
+      responses:
+        "200":
+          description: Export result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExportResult"
+
+  /books/{bookId}/entries:
+    get:
+      operationId: listEntries
+      tags: [entries]
+      summary: List all entries for a book
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of entries
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Entry"
+
+  /books/{bookId}/entries/{entryId}/generate:
+    post:
+      operationId: generateEntry
+      tags: [entries]
+      summary: Generate content for a single entry
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: entryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Entry with generated content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entry"
+
+  /books/{bookId}/entries/{entryId}:
+    patch:
+      operationId: updateEntry
+      tags: [entries]
+      summary: Update an entry (lock/unlock, edit content)
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: entryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EntryUpdate"
+      responses:
+        "200":
+          description: Updated entry
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entry"
+
 components:
   schemas:
     HealthStatus:
       type: object
+      required: [status]
       properties:
         status:
           type: string
-      required:
-        - status
 
+    Book:
+      type: object
+      required: [id, niche, subNiche, deepNiche, audience, tone, numEntries, minWords, maxWords, status, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        niche:
+          type: string
+        subNiche:
+          type: string
+        deepNiche:
+          type: string
+        audience:
+          type: string
+          enum: [children, teenagers, adults]
+        tone:
+          type: string
+          enum: [educational, funny, inspirational, professional, casual]
+        numEntries:
+          type: integer
+        minWords:
+          type: integer
+        maxWords:
+          type: integer
+        status:
+          type: string
+          enum: [setup, blueprint, writing, quality, finished]
+        title:
+          type: ["string", "null"]
+        authorName:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    BookInput:
+      type: object
+      required: [niche, subNiche, deepNiche, audience, tone, numEntries, minWords, maxWords]
+      properties:
+        niche:
+          type: string
+        subNiche:
+          type: string
+        deepNiche:
+          type: string
+        audience:
+          type: string
+          enum: [children, teenagers, adults]
+        tone:
+          type: string
+          enum: [educational, funny, inspirational, professional, casual]
+        numEntries:
+          type: integer
+        minWords:
+          type: integer
+        maxWords:
+          type: integer
+        title:
+          type: string
+        authorName:
+          type: string
+
+    BookUpdate:
+      type: object
+      properties:
+        niche:
+          type: string
+        subNiche:
+          type: string
+        deepNiche:
+          type: string
+        audience:
+          type: string
+        tone:
+          type: string
+        numEntries:
+          type: integer
+        minWords:
+          type: integer
+        maxWords:
+          type: integer
+        status:
+          type: string
+        title:
+          type: string
+        authorName:
+          type: string
+
+    BookStats:
+      type: object
+      required: [totalEntries, completedEntries, remainingEntries, completionPercentage, totalWordCount, averageWordsPerEntry, lockedEntries]
+      properties:
+        totalEntries:
+          type: integer
+        completedEntries:
+          type: integer
+        remainingEntries:
+          type: integer
+        completionPercentage:
+          type: number
+        totalWordCount:
+          type: integer
+        averageWordsPerEntry:
+          type: number
+        lockedEntries:
+          type: integer
+
+    Entry:
+      type: object
+      required: [id, bookId, position, title, status, isLocked, createdAt, updatedAt]
+      properties:
+        id:
+          type: integer
+        bookId:
+          type: integer
+        position:
+          type: integer
+        title:
+          type: string
+        content:
+          type: ["string", "null"]
+        contentJson:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, generating, done, failed]
+        isLocked:
+          type: boolean
+        wordCount:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+
+    EntryUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        contentJson:
+          type: string
+        isLocked:
+          type: boolean
+        status:
+          type: string
+
+    ExportRequest:
+      type: object
+      required: [format]
+      properties:
+        format:
+          type: string
+          enum: [txt, markdown]
+        includeConclusion:
+          type: boolean
+        authorName:
+          type: string
+
+    ExportResult:
+      type: object
+      required: [format, content, filename]
+      properties:
+        format:
+          type: string
+        content:
+          type: string
+        filename:
+          type: string
+        wordCount:
+          type: integer
+
+    QualityIssue:
+      type: object
+      required: [entryId, entryTitle, issueType, severity, description]
+      properties:
+        entryId:
+          type: integer
+        entryTitle:
+          type: string
+        issueType:
+          type: string
+          enum: [duplicate, near_duplicate, word_count, audience, template_structure]
+        severity:
+          type: string
+          enum: [warning, error]
+        description:
+          type: string
+
+    QualityReport:
+      type: object
+      required: [bookId, totalEntries, passedEntries, failedEntries, issues]
+      properties:
+        bookId:
+          type: integer
+        totalEntries:
+          type: integer
+        passedEntries:
+          type: integer
+        failedEntries:
+          type: integer
+        issues:
+          type: array
+          items:
+            $ref: "#/components/schemas/QualityIssue"
