@@ -12,7 +12,7 @@ import {
   ExportBookParams,
   ExportBookBody,
 } from "@workspace/api-zod";
-import { openai } from "../lib/openai";
+import { cerebras } from "../lib/cerebras";
 import { generateBlueprint } from "../lib/bookAI";
 
 const router: IRouter = Router();
@@ -103,16 +103,16 @@ router.post("/books/:id/generate-blueprint", async (req, res): Promise<void> => 
   // Generate titles via AI
   let titles: string[];
   try {
-    titles = await generateBlueprint(book, openai);
+    titles = await generateBlueprint(book, cerebras);
   } catch (err: unknown) {
     const status = (err as { status?: number }).status ?? 500;
     if (status === 429) {
-      res.status(429).json({ error: "OpenAI quota exceeded. Please check your API key billing at platform.openai.com." });
+      res.status(429).json({ error: "Cerebras rate limit exceeded. Please wait a moment and try again." });
     } else if (status === 401) {
-      res.status(401).json({ error: "Invalid OpenAI API key. Please update your OPENAI_API_KEY secret." });
+      res.status(401).json({ error: "Invalid Cerebras API key. Please update your CEREBRAS_API_KEY secret." });
     } else {
       const message = (err as { message?: string }).message ?? "Unknown error";
-      res.status(500).json({ error: `AI generation failed: ${message}` });
+      res.status(500).json({ error: `Blueprint generation failed: ${message}` });
     }
     return;
   }

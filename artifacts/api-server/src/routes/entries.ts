@@ -7,7 +7,7 @@ import {
   UpdateEntryParams,
   UpdateEntryBody,
 } from "@workspace/api-zod";
-import { openai } from "../lib/openai";
+import { groq, GROQ_MODEL } from "../lib/groq";
 import { buildContentPrompt, countWords } from "../lib/bookAI";
 
 const router: IRouter = Router();
@@ -72,9 +72,9 @@ router.post("/books/:bookId/entries/:entryId/generate", async (req, res): Promis
     while (attempts < maxAttempts) {
       attempts++;
       const prompt = buildContentPrompt(book, entry.title);
-      const response = await openai.chat.completions.create({
-        model: "gpt-5-mini",
-        max_completion_tokens: 1024,
+      const response = await groq.chat.completions.create({
+        model: GROQ_MODEL,
+        max_tokens: 1024,
         messages: [{ role: "user", content: prompt }],
       });
       content = response.choices[0]?.message?.content ?? "";
@@ -86,12 +86,12 @@ router.post("/books/:bookId/entries/:entryId/generate", async (req, res): Promis
     await db.update(entriesTable).set({ status: "failed" }).where(eq(entriesTable.id, entry.id));
     const status = (err as { status?: number }).status ?? 500;
     if (status === 429) {
-      res.status(429).json({ error: "OpenAI quota exceeded. Please check your API key billing at platform.openai.com." });
+      res.status(429).json({ error: "Groq rate limit exceeded. Please wait a moment and try again." });
     } else if (status === 401) {
-      res.status(401).json({ error: "Invalid OpenAI API key. Please update your OPENAI_API_KEY secret." });
+      res.status(401).json({ error: "Invalid Groq API key. Please update your GROQ_API_KEY secret." });
     } else {
       const message = (err as { message?: string }).message ?? "Unknown error";
-      res.status(500).json({ error: `AI generation failed: ${message}` });
+      res.status(500).json({ error: `Entry generation failed: ${message}` });
     }
     return;
   }

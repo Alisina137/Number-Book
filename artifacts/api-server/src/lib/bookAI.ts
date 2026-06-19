@@ -1,5 +1,6 @@
-import type OpenAI from "openai";
+import Cerebras from "@cerebras/cerebras_cloud_sdk";
 import type { Book } from "@workspace/db";
+import { CEREBRAS_MODEL } from "./cerebras";
 
 export function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
@@ -18,7 +19,7 @@ export function detectDuplicates(titles: string[]): string[] {
   return unique;
 }
 
-export async function generateBlueprint(book: Book, openai: OpenAI): Promise<string[]> {
+export async function generateBlueprint(book: Book, cerebras: Cerebras): Promise<string[]> {
   const audienceDesc =
     book.audience === "children"
       ? "children aged 4-10 (simple language)"
@@ -42,13 +43,13 @@ Output ONLY the numbered list of titles, one per line, like:
 
 Do not include any other text, explanation, or formatting.`;
 
-  const response = await openai.chat.completions.create({
-    model: "gpt-5-mini",
-    max_completion_tokens: 4096,
+  const response = await cerebras.chat.completions.create({
+    model: CEREBRAS_MODEL,
+    max_completion_tokens: 8192,
     messages: [{ role: "user", content: prompt }],
   });
 
-  const raw = response.choices[0]?.message?.content ?? "";
+  const raw = (response.choices[0]?.message?.content as string) ?? "";
   const lines = raw
     .split("\n")
     .map((l) => l.replace(/^\d+\.\s*/, "").trim())
@@ -65,17 +66,17 @@ export function buildContentPrompt(book: Book, entryTitle: string): string {
       ? "Use moderate vocabulary and moderate complexity suitable for teenagers aged 11-16."
       : "Use full vocabulary and advanced concepts suitable for adults aged 17-50.";
 
-  const toneInstructions = {
-    educational: "Write in an educational, informative tone that teaches the reader something new.",
-    funny: "Write in a funny, humorous tone that entertains the reader.",
-    inspirational: "Write in an inspirational, uplifting tone that motivates the reader.",
-    professional: "Write in a professional, authoritative tone.",
-    casual: "Write in a casual, conversational tone as if talking to a friend.",
-  }[book.tone] ?? "Write in an engaging tone.";
+  const toneInstructions =
+    {
+      educational: "Write in an educational, informative tone that teaches the reader something new.",
+      funny: "Write in a funny, humorous tone that entertains the reader.",
+      inspirational: "Write in an inspirational, uplifting tone that motivates the reader.",
+      professional: "Write in a professional, authoritative tone.",
+      casual: "Write in a casual, conversational tone as if talking to a friend.",
+    }[book.tone] ?? "Write in an engaging tone.";
 
   const wordTarget = `Write between ${book.minWords} and ${book.maxWords} words total.`;
 
-  // Template by niche
   const nicheUpper = book.niche.toLowerCase();
   let templateInstructions = "";
 

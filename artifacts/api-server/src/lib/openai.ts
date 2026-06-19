@@ -1,9 +1,3 @@
-import OpenAI from "openai";
-
-if (!process.env.OPENAI_API_KEY) {
-  throw new Error("OPENAI_API_KEY must be set.");
-}
-
-export const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// This file is intentionally left empty.
+// OpenAI has been replaced by Groq and Cerebras.
+// See groq.ts and cerebras.ts for the AI clients.
