@@ -25,10 +25,9 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  ShieldCheck,
-  ArrowRight,
 } from "lucide-react";
 import type { Entry } from "@workspace/api-client-react";
+import { BookStepNav } from "@/components/BookStepNav";
 
 const STATUS_ICON: Record<string, React.ReactNode> = {
   pending: <Clock className="w-3.5 h-3.5 text-muted-foreground" />,
@@ -237,27 +236,7 @@ export default function Write() {
           </div>
         )}
 
-        <div className="mt-auto space-y-2">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-full"
-            onClick={() => setLocation(`/books/${bookId}/quality`)}
-            data-testid="button-go-quality"
-          >
-            <ShieldCheck className="w-3.5 h-3.5 mr-1.5" />
-            Quality Check
-          </Button>
-          <Button
-            size="sm"
-            className="w-full"
-            onClick={() => setLocation(`/books/${bookId}/export`)}
-            data-testid="button-go-export"
-          >
-            Export
-            <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-          </Button>
-        </div>
+        <BookStepNav bookId={bookId} current="write" />
       </aside>
 
       {/* Entry list */}
