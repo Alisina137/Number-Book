@@ -8,7 +8,7 @@ import {
   UpdateEntryBody,
 } from "@workspace/api-zod";
 import { groq, GROQ_MODEL } from "../lib/groq";
-import { buildContentPrompt, countWords } from "../lib/bookAI";
+import { buildContentPrompt, buildContentSystemPrompt, countWords } from "../lib/bookAI";
 
 const router: IRouter = Router();
 
@@ -72,10 +72,14 @@ router.post("/books/:bookId/entries/:entryId/generate", async (req, res): Promis
     while (attempts < maxAttempts) {
       attempts++;
       const prompt = buildContentPrompt(book, entry.title);
+      const systemPrompt = buildContentSystemPrompt(book.minWords, book.maxWords);
       const response = await groq.chat.completions.create({
         model: GROQ_MODEL,
-        max_tokens: 1024,
-        messages: [{ role: "user", content: prompt }],
+        max_tokens: 1500,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt },
+        ],
       });
       content = response.choices[0]?.message?.content ?? "";
       wordCount = countWords(content);

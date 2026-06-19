@@ -59,76 +59,83 @@ Do not include any other text, explanation, or formatting.`;
 }
 
 export function buildContentPrompt(book: Book, entryTitle: string): string {
-  const audienceInstructions =
+  const audience =
     book.audience === "children"
-      ? "Use very simple language, short sentences, and easy concepts suitable for children aged 4-10."
+      ? "children aged 4-10 (simple language only)"
       : book.audience === "teenagers"
-      ? "Use moderate vocabulary and moderate complexity suitable for teenagers aged 11-16."
-      : "Use full vocabulary and advanced concepts suitable for adults aged 17-50.";
+      ? "teenagers aged 11-16"
+      : "adults";
 
-  const toneInstructions =
+  const tone =
     {
-      educational: "Write in an educational, informative tone that teaches the reader something new.",
-      funny: "Write in a funny, humorous tone that entertains the reader.",
-      inspirational: "Write in an inspirational, uplifting tone that motivates the reader.",
-      professional: "Write in a professional, authoritative tone.",
-      casual: "Write in a casual, conversational tone as if talking to a friend.",
-    }[book.tone] ?? "Write in an engaging tone.";
+      educational: "educational and informative",
+      funny: "funny and entertaining",
+      inspirational: "inspirational",
+      professional: "professional",
+      casual: "casual and friendly",
+    }[book.tone] ?? "engaging";
 
-  const wordTarget = `Write between ${book.minWords} and ${book.maxWords} words total.`;
+  const min = book.minWords;
+  const max = book.maxWords;
+  const niche = book.niche.toLowerCase();
 
-  const nicheUpper = book.niche.toLowerCase();
-  let templateInstructions = "";
+  // Build a section count hint that scales with the word target
+  const sectionSentences = Math.max(3, Math.ceil(min / 15));
 
-  if (nicheUpper.includes("fact")) {
-    templateInstructions = `Format as:
-Title: [${entryTitle}]
-Fact: [The main fact content]
-Did You Know? [An additional surprising detail]`;
-  } else if (nicheUpper.includes("trivia")) {
-    templateInstructions = `Format as:
-Question: [The trivia question]
-A) [Option]
-B) [Option]
-C) [Option]
-D) [Option]
-Answer: [Correct letter and answer]
-Explanation: [Brief explanation]`;
-  } else if (nicheUpper.includes("joke")) {
-    templateInstructions = `Format as:
-Setup: [The joke setup]
-Punchline: [The punchline]`;
-  } else if (nicheUpper.includes("riddle")) {
-    templateInstructions = `Format as:
-Riddle: [The riddle]
-Answer: [The answer]`;
-  } else if (nicheUpper.includes("productiv") || nicheUpper.includes("tip")) {
-    templateInstructions = `Format as:
-Tip: [The tip title/headline]
-Explanation: [Why this tip works]
-Action Step: [Exactly what to do]`;
-  } else if (nicheUpper.includes("lesson") || nicheUpper.includes("principle")) {
-    templateInstructions = `Format as:
-Lesson: [The lesson title]
-Explanation: [What this lesson means]
-Practical Application: [How to apply it in real life]`;
-  } else if (nicheUpper.includes("story prompt") || nicheUpper.includes("writing prompt")) {
-    templateInstructions = `Format as:
-Prompt Title: [${entryTitle}]
-Description: [The prompt description]
-Creative Challenge: [An additional creative twist or challenge]`;
+  let sectionInstructions: string;
+
+  if (niche.includes("fact")) {
+    sectionInstructions = `
+SECTION 1 – MAIN FACT
+Write ${sectionSentences} or more complete sentences about this topic. Include specific numbers, measurements, scientific details, and real-world comparisons. Paint a vivid picture — explain not just what the fact is but why it is remarkable.
+
+SECTION 2 – DID YOU KNOW?
+Write ${Math.max(2, Math.ceil(min / 25))} or more complete sentences revealing a surprising related detail. This must add genuinely new information — not repeat the first section.`;
+  } else if (niche.includes("trivia")) {
+    sectionInstructions = `
+QUESTION: Write the trivia question.
+A) Option one
+B) Option two
+C) Option three
+D) Option four
+ANSWER: State the correct letter and the full answer.
+EXPLANATION: Write ${sectionSentences} or more complete sentences explaining why the answer is correct, including background history, science, or interesting context.`;
+  } else if (niche.includes("joke")) {
+    sectionInstructions = `
+SETUP: Write 3 or more complete sentences establishing the joke scenario with enough context and detail for the punchline to land.
+PUNCHLINE: Deliver the punchline.
+WHY IT'S FUNNY: Write 2 or more sentences unpacking the wordplay or humour.`;
+  } else if (niche.includes("riddle")) {
+    sectionInstructions = `
+RIDDLE: Write the riddle with enough clues spread across 3 or more sentences.
+HINT: Write 2 sentences offering a subtle nudge.
+ANSWER: State the answer. Then write 2 or more sentences explaining the reasoning behind it.`;
+  } else if (niche.includes("productiv") || niche.includes("tip")) {
+    sectionInstructions = `
+TIP: ${entryTitle}
+WHY IT WORKS: Write ${sectionSentences} or more complete sentences explaining the psychology, science, or reasoning. Be specific — reference real mechanisms, not vague statements.
+ACTION STEP: Write ${Math.max(2, Math.ceil(min / 25))} or more complete sentences describing exactly what to do, when, and how to make it a daily habit.`;
+  } else if (niche.includes("lesson") || niche.includes("principle")) {
+    sectionInstructions = `
+LESSON: ${entryTitle}
+EXPLANATION: Write ${sectionSentences} or more complete sentences explaining what this lesson means and why it matters. Use a concrete real-world scenario.
+HOW TO APPLY IT: Write ${Math.max(2, Math.ceil(min / 25))} or more complete sentences with a practical step-by-step example a real person can follow today.`;
+  } else if (niche.includes("story prompt") || niche.includes("writing prompt")) {
+    sectionInstructions = `
+SCENE: Write ${sectionSentences} or more complete sentences setting up the story — introduce the setting, a character, and a source of tension or conflict.
+THE CHALLENGE: Write ${Math.max(2, Math.ceil(min / 25))} or more sentences adding a creative twist or unexpected constraint.`;
   } else {
-    templateInstructions = `Write an engaging entry about: ${entryTitle}`;
+    sectionInstructions = `Write ${sectionSentences} or more complete, detailed sentences about this topic. Include specific examples, numbers, and context. Never write a one-liner.`;
   }
 
-  return `You are writing a ${book.tone} ${book.niche} book about "${book.deepNiche}" for ${book.audience}.
-${audienceInstructions}
-${toneInstructions}
-${wordTarget}
+  return `You are writing an entry for a ${tone} ${book.niche} book called "${book.deepNiche}", targeted at ${audience}.
 
-Write an entry for the following title: "${entryTitle}"
+Entry title: "${entryTitle}"
+${sectionInstructions}
 
-${templateInstructions}
+Your response must be between ${min} and ${max} words. Write every sentence in full. Do not use bullet points. Do not write the title again at the top. Do not include any word count or commentary.`;
+}
 
-Important: Stay strictly within ${book.minWords}-${book.maxWords} words. Do not add any meta-commentary or explanations.`;
+export function buildContentSystemPrompt(minWords: number, maxWords: number): string {
+  return `You are a professional nonfiction book writer. You write rich, detailed, fully-developed content — never brief summaries. Every response must be between ${minWords} and ${maxWords} words. If a section feels short, keep writing until you hit the word target.`;
 }
