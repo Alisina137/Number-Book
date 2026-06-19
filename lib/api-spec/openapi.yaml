@@ -222,6 +222,30 @@ paths:
                 items:
                   $ref: "#/components/schemas/Entry"
 
+  /books/{bookId}/entries/{entryId}/regenerate-title:
+    post:
+      operationId: regenerateEntryTitle
+      tags: [entries]
+      summary: Regenerate the title for a single entry using AI
+      parameters:
+        - name: bookId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: entryId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Entry with regenerated title
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Entry"
+
   /books/{bookId}/entries/{entryId}/generate:
     post:
       operationId: generateEntry

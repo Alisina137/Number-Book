@@ -8,11 +8,63 @@ import {
   useListEntries,
   getListEntriesQueryKey,
   useUpdateBook,
+  useRegenerateEntryTitle,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { BookOpen, ArrowRight, Loader2, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 import { BookStepNav } from "@/components/BookStepNav";
+import type { Entry } from "@workspace/api-client-react";
+
+function EntryRow({ entry, bookId }: { entry: Entry; bookId: number }) {
+  const queryClient = useQueryClient();
+  const regenerateTitle = useRegenerateEntryTitle();
+  const isRegenerating = regenerateTitle.isPending && regenerateTitle.variables?.entryId === entry.id;
+
+  const handleRegenerate = () => {
+    regenerateTitle.mutate(
+      { bookId, entryId: entry.id },
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListEntriesQueryKey(bookId) });
+        },
+      }
+    );
+  };
+
+  return (
+    <motion.div
+      key={entry.id}
+      initial={{ opacity: 0, x: -8 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="group flex items-center gap-3 px-5 py-3 hover:bg-muted/40 transition-colors"
+      data-testid={`entry-title-${entry.id}`}
+    >
+      <span className="text-xs font-mono text-muted-foreground w-8 flex-shrink-0 text-right">
+        {entry.position}.
+      </span>
+      <span className="text-sm text-foreground flex-1 min-w-0">
+        {isRegenerating ? (
+          <span className="text-muted-foreground italic flex items-center gap-1.5">
+            <Loader2 className="w-3 h-3 animate-spin inline" />
+            Regenerating…
+          </span>
+        ) : (
+          entry.title
+        )}
+      </span>
+      <button
+        onClick={handleRegenerate}
+        disabled={isRegenerating}
+        title="Regenerate this title"
+        className="opacity-0 group-hover:opacity-100 flex-shrink-0 p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-all disabled:opacity-30"
+        data-testid={`button-regen-title-${entry.id}`}
+      >
+        <RefreshCw className={`w-3.5 h-3.5 ${isRegenerating ? "animate-spin" : ""}`} />
+      </button>
+    </motion.div>
+  );
+}
 
 export default function Blueprint() {
   const { id } = useParams<{ id: string }>();
@@ -63,8 +115,6 @@ export default function Blueprint() {
       runGenerate();
     }
   }, [book?.status]);
-
-  const handleRegenerate = () => runGenerate();
 
   const handleProceed = () => {
     updateBook.mutate(
@@ -167,7 +217,7 @@ export default function Blueprint() {
                   <Button
                     className="mt-4 w-full"
                     variant="outline"
-                    onClick={handleRegenerate}
+                    onClick={runGenerate}
                     data-testid="button-retry"
                   >
                     <RefreshCw className="w-4 h-4 mr-2" />
@@ -187,29 +237,24 @@ export default function Blueprint() {
                       <span className="text-sm font-medium">{entries.length} entries generated</span>
                     </div>
                     <button
-                      onClick={handleRegenerate}
+                      onClick={runGenerate}
                       disabled={isGenerating}
                       className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1.5 transition-colors disabled:opacity-40"
                       data-testid="button-regenerate-blueprint"
                     >
                       <RefreshCw className="w-3 h-3" />
-                      Regenerate
+                      Regenerate all
                     </button>
                   </div>
-                  <div className="divide-y divide-border max-h-[500px] overflow-y-auto">
+                  <div className="divide-y divide-border max-h-[560px] overflow-y-auto">
                     {entries.map((entry, i) => (
                       <motion.div
                         key={entry.id}
                         initial={{ opacity: 0, x: -8 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: Math.min(i * 0.015, 0.5) }}
-                        className="flex items-baseline gap-3 px-5 py-3 hover:bg-muted/40 transition-colors"
-                        data-testid={`entry-title-${entry.id}`}
                       >
-                        <span className="text-xs font-mono text-muted-foreground w-8 flex-shrink-0 text-right">
-                          {entry.position}.
-                        </span>
-                        <span className="text-sm text-foreground">{entry.title}</span>
+                        <EntryRow entry={entry} bookId={bookId} />
                       </motion.div>
                     ))}
                   </div>
@@ -232,7 +277,7 @@ export default function Blueprint() {
             {!isGenerating && !errorMessage && !hasEntries && !entriesLoading && book?.status !== "setup" && (
               <div className="text-center py-16">
                 <p className="text-muted-foreground mb-4">No entries found. Try generating the blueprint.</p>
-                <Button onClick={handleRegenerate} data-testid="button-generate-now">
+                <Button onClick={runGenerate} data-testid="button-generate-now">
                   Generate Blueprint
                 </Button>
               </div>

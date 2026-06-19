@@ -237,6 +237,29 @@ export const ListEntriesResponse = zod.array(ListEntriesResponseItem)
 
 
 /**
+ * @summary Regenerate the title for a single entry using AI
+ */
+export const RegenerateEntryTitleParams = zod.object({
+  "bookId": zod.coerce.number(),
+  "entryId": zod.coerce.number()
+})
+
+export const RegenerateEntryTitleResponse = zod.object({
+  "id": zod.number(),
+  "bookId": zod.number(),
+  "position": zod.number(),
+  "title": zod.string(),
+  "content": zod.string().nullish(),
+  "contentJson": zod.string().nullish(),
+  "status": zod.enum(['pending', 'generating', 'done', 'failed']),
+  "isLocked": zod.boolean(),
+  "wordCount": zod.number().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
  * @summary Generate content for a single entry
  */
 export const GenerateEntryParams = zod.object({

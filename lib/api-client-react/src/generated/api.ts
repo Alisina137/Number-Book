@@ -861,6 +861,78 @@ export function useListEntries<TData = Awaited<ReturnType<typeof listEntries>>, 
 
 
 
+export const getRegenerateEntryTitleUrl = (bookId: number,
+    entryId: number,) => {
+
+
+
+
+  return `/api/books/${bookId}/entries/${entryId}/regenerate-title`
+}
+
+/**
+ * @summary Regenerate the title for a single entry using AI
+ */
+export const regenerateEntryTitle = async (bookId: number,
+    entryId: number, options?: RequestInit): Promise<Entry> => {
+
+  return customFetch<Entry>(getRegenerateEntryTitleUrl(bookId,entryId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getRegenerateEntryTitleMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof regenerateEntryTitle>>, TError,{bookId: number;entryId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof regenerateEntryTitle>>, TError,{bookId: number;entryId: number}, TContext> => {
+
+const mutationKey = ['regenerateEntryTitle'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof regenerateEntryTitle>>, {bookId: number;entryId: number}> = (props) => {
+          const {bookId,entryId} = props ?? {};
+
+          return  regenerateEntryTitle(bookId,entryId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegenerateEntryTitleMutationResult = NonNullable<Awaited<ReturnType<typeof regenerateEntryTitle>>>
+
+    export type RegenerateEntryTitleMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Regenerate the title for a single entry using AI
+ */
+export const useRegenerateEntryTitle = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof regenerateEntryTitle>>, TError,{bookId: number;entryId: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof regenerateEntryTitle>>,
+        TError,
+        {bookId: number;entryId: number},
+        TContext
+      > => {
+      return useMutation(getRegenerateEntryTitleMutationOptions(options));
+    }
+
 export const getGenerateEntryUrl = (bookId: number,
     entryId: number,) => {
 

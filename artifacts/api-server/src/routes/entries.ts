@@ -8,7 +8,8 @@ import {
   UpdateEntryBody,
 } from "@workspace/api-zod";
 import { groq, GROQ_MODEL } from "../lib/groq";
-import { buildContentPrompt, buildContentSystemPrompt, countWords } from "../lib/bookAI";
+import { cerebras } from "../lib/cerebras";
+import { buildContentPrompt, buildContentSystemPrompt, countWords, regenerateSingleTitle } from "../lib/bookAI";
 
 const router: IRouter = Router();
 
@@ -25,6 +26,53 @@ router.get("/books/:bookId/entries", async (req, res): Promise<void> => {
     .where(eq(entriesTable.bookId, params.data.bookId))
     .orderBy(entriesTable.position);
   res.json(entries);
+});
+
+// Regenerate title for a single entry
+router.post("/books/:bookId/entries/:entryId/regenerate-title", async (req, res): Promise<void> => {
+  const params = GenerateEntryParams.safeParse(req.params);
+  if (!params.success) {
+    res.status(400).json({ error: params.error.message });
+    return;
+  }
+
+  const [entry] = await db
+    .select()
+    .from(entriesTable)
+    .where(and(eq(entriesTable.id, params.data.entryId), eq(entriesTable.bookId, params.data.bookId)));
+
+  if (!entry) {
+    res.status(404).json({ error: "Entry not found" });
+    return;
+  }
+
+  const [book] = await db.select().from(booksTable).where(eq(booksTable.id, params.data.bookId));
+  if (!book) {
+    res.status(404).json({ error: "Book not found" });
+    return;
+  }
+
+  const allEntries = await db.select().from(entriesTable).where(eq(entriesTable.bookId, book.id));
+  const existingTitles = allEntries
+    .sort((a, b) => a.position - b.position)
+    .map((e) => e.title);
+
+  let newTitle: string;
+  try {
+    newTitle = await regenerateSingleTitle(book, entry.position, existingTitles, groq);
+  } catch (err: unknown) {
+    const message = (err as { message?: string }).message ?? "Unknown error";
+    res.status(500).json({ error: `Title regeneration failed: ${message}` });
+    return;
+  }
+
+  const [updated] = await db
+    .update(entriesTable)
+    .set({ title: newTitle, status: "pending", content: null, wordCount: null, contentJson: null })
+    .where(eq(entriesTable.id, entry.id))
+    .returning();
+
+  res.json(updated);
 });
 
 // Generate content for a single entry

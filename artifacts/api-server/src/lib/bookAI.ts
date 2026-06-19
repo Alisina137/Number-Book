@@ -1,6 +1,8 @@
 import Cerebras from "@cerebras/cerebras_cloud_sdk";
+import Groq from "groq-sdk";
 import type { Book } from "@workspace/db";
 import { CEREBRAS_MODEL } from "./cerebras";
+import { GROQ_MODEL } from "./groq";
 
 export function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
@@ -56,6 +58,59 @@ Do not include any other text, explanation, or formatting.`;
     .filter((l) => l.length > 0);
 
   return detectDuplicates(lines).slice(0, book.numEntries);
+}
+
+export async function regenerateSingleTitle(
+  book: Book,
+  position: number,
+  existingTitles: string[],
+  groq: Groq
+): Promise<string> {
+  const audienceDesc =
+    book.audience === "children"
+      ? "children aged 4-10 (simple language)"
+      : book.audience === "teenagers"
+      ? "teenagers aged 11-16 (moderate vocabulary)"
+      : "adults aged 17-50 (full vocabulary)";
+
+  const otherTitles = existingTitles.filter((_, i) => i !== position - 1);
+
+  const prompt = `Generate a single creative title for entry #${position} in a ${book.tone} ${book.niche} book about "${book.deepNiche}" for ${audienceDesc}.
+
+These titles are already taken — yours must be different from all of them:
+${otherTitles.map((t) => `- ${t}`).join("\n")}
+
+Reply with ONLY the new title. No number, no explanation, no punctuation before or after.`;
+
+  const response = await groq.chat.completions.create({
+    model: GROQ_MODEL,
+    max_tokens: 80,
+    messages: [
+      { role: "system", content: "You output only a single book entry title. Nothing else — no explanations, no numbers, no quotes." },
+      { role: "user", content: prompt },
+    ],
+  });
+
+  const raw = (response.choices[0]?.message?.content as string) ?? "";
+
+  // Parse: take first non-empty line, strip numbering, markdown bold/italic
+  const title = raw
+    .split("\n")
+    .map((l) =>
+      l
+        .replace(/^\d+[\.\)]\s*/, "")  // strip leading "4. " or "4) "
+        .replace(/\*\*/g, "")           // strip markdown bold
+        .replace(/\*/g, "")             // strip markdown italic
+        .replace(/^["']|["']$/g, "")    // strip surrounding quotes
+        .trim()
+    )
+    .find((l) => l.length > 5) ?? "";  // take first meaningful line
+
+  if (!title) {
+    throw new Error("AI returned an empty title. Please try again.");
+  }
+
+  return title;
 }
 
 export function buildContentPrompt(book: Book, entryTitle: string): string {
