@@ -10,4 +10,9 @@ export interface CompetitorSuggestion {
   title: string;
   author: string;
   reason: string;
+  rating?: number;
+  reviewCount?: number;
+  asin?: string;
+  amazonUrl?: string;
+  image?: string;
 }

@@ -12,5 +12,8 @@ export interface AddCompetitorRequest {
   author?: string;
   amazonUrl?: string;
   isbn?: string;
+  asin?: string;
+  rating?: number;
+  reviewCount?: number;
   addedVia?: AddCompetitorRequestAddedVia;
 }

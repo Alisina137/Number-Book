@@ -561,6 +561,12 @@ components:
           type: string
         isbn:
           type: string
+        asin:
+          type: string
+        rating:
+          type: number
+        reviewCount:
+          type: integer
         addedVia:
           type: string
           enum: [url, isbn, title, manual, suggested]
@@ -574,6 +580,16 @@ components:
         author:
           type: string
         reason:
+          type: string
+        rating:
+          type: number
+        reviewCount:
+          type: integer
+        asin:
+          type: string
+        amazonUrl:
+          type: string
+        image:
           type: string
 
     CompetitorSuggestionsResponse:

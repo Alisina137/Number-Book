@@ -3,12 +3,12 @@ import { eq } from "drizzle-orm";
 import { db, booksTable } from "@workspace/db";
 import { cerebras } from "../lib/cerebras";
 import {
-  suggestCompetitors,
   analyzeCompetitorBook,
   synthesizeCompetitorIntelligence,
   type CompetitorData,
   type CompetitorBook,
 } from "../lib/bookAI";
+import { searchAmazonBooksForCompetitors } from "../lib/amazonSearch";
 import { randomUUID } from "crypto";
 
 const router: IRouter = Router();
@@ -39,22 +39,20 @@ router.post("/books/:id/competitors/suggest", async (req, res): Promise<void> =>
   const [book] = await db.select().from(booksTable).where(eq(booksTable.id, id));
   if (!book) { res.status(404).json({ error: "Book not found" }); return; }
 
-  let suggestions;
   try {
-    suggestions = await suggestCompetitors(book, cerebras);
+    const suggestions = await searchAmazonBooksForCompetitors(book);
+    res.json({ suggestions });
   } catch (err) {
-    handleAIError(err, res, "Competitor suggestion");
-    return;
+    const message = (err as { message?: string }).message ?? "Unknown error";
+    res.status(500).json({ error: `Amazon search failed: ${message}` });
   }
-
-  res.json({ suggestions });
 });
 
 router.post("/books/:id/competitors/add", async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid book id" }); return; }
 
-  const { title, author, amazonUrl, isbn, addedVia } = req.body ?? {};
+  const { title, author, amazonUrl, isbn, asin, rating, reviewCount, addedVia } = req.body ?? {};
   if (!title) { res.status(400).json({ error: "title is required" }); return; }
 
   const [book] = await db.select().from(booksTable).where(eq(booksTable.id, id));
@@ -68,6 +66,9 @@ router.post("/books/:id/competitors/add", async (req, res): Promise<void> => {
     author: author ?? undefined,
     amazonUrl: amazonUrl ?? undefined,
     isbn: isbn ?? undefined,
+    asin: asin ?? undefined,
+    ratings: rating ?? undefined,
+    reviewCount: reviewCount ?? undefined,
     addedVia: addedVia ?? "manual",
     analyzed: false,
   };

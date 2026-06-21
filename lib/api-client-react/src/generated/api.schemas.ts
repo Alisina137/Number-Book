@@ -137,6 +137,9 @@ export interface AddCompetitorRequest {
   author?: string;
   amazonUrl?: string;
   isbn?: string;
+  asin?: string;
+  rating?: number;
+  reviewCount?: number;
   addedVia?: AddCompetitorRequestAddedVia;
 }
 
@@ -144,6 +147,11 @@ export interface CompetitorSuggestion {
   title: string;
   author: string;
   reason: string;
+  rating?: number;
+  reviewCount?: number;
+  asin?: string;
+  amazonUrl?: string;
+  image?: string;
 }
 
 export interface CompetitorSuggestionsResponse {

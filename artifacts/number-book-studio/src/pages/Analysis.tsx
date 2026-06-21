@@ -94,6 +94,11 @@ interface CompetitorSuggestion {
   title: string;
   author: string;
   reason: string;
+  rating?: number;
+  reviewCount?: number;
+  asin?: string;
+  amazonUrl?: string;
+  image?: string;
 }
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
@@ -354,12 +359,17 @@ function CompetitorSection({ bookId, competitorData, onUpdate }: { bookId: numbe
     );
   };
 
-  const addCompetitor = (title: string, author?: string, addedVia: "suggested" | "manual" = "suggested") => {
+  const addCompetitor = (
+    title: string,
+    author?: string,
+    addedVia: "suggested" | "manual" = "suggested",
+    extra?: { asin?: string; amazonUrl?: string; rating?: number; reviewCount?: number }
+  ) => {
     const tempId = title;
     setAddingIds((prev) => new Set(prev).add(tempId));
     setManualError(null);
     addMutation.mutate(
-      { id: bookId, data: { title, author: author ?? undefined, addedVia } },
+      { id: bookId, data: { title, author: author ?? undefined, addedVia, ...extra } },
       {
         onSuccess: () => {
           onUpdate();
@@ -434,7 +444,8 @@ function CompetitorSection({ bookId, competitorData, onUpdate }: { bookId: numbe
             ) : suggestions.length > 0 ? (
               <><RefreshCw className="w-3 h-3 mr-1" /> Refresh</>
             ) : (
-              <><Sparkles className="w-3 h-3 mr-1" /> Get Suggestions</>
+              <><Sparkles className="w-3 h-3 mr-1" /> Search Amazon</>
+
             )}
           </Button>
         </div>
@@ -450,21 +461,49 @@ function CompetitorSection({ bookId, competitorData, onUpdate }: { bookId: numbe
               const isAdding = addingIds.has(s.title);
               return (
                 <div key={i} className="flex items-start gap-2 bg-muted/50 rounded-lg p-2.5">
+                  {/* Book cover thumbnail */}
+                  {s.image ? (
+                    <img
+                      src={s.image}
+                      alt={s.title}
+                      className="w-10 h-14 object-cover rounded flex-shrink-0 shadow-sm"
+                    />
+                  ) : (
+                    <div className="w-10 h-14 bg-muted rounded flex-shrink-0 flex items-center justify-center">
+                      <BookOpen className="w-4 h-4 text-muted-foreground" />
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-foreground truncate">{s.title}</p>
-                    <p className="text-[11px] text-muted-foreground">{s.author}</p>
-                    <p className="text-[11px] text-muted-foreground/80 mt-0.5 line-clamp-2">{s.reason}</p>
+                    <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">{s.title}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{s.author}</p>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      {s.rating && (
+                        <span className="text-[10px] text-yellow-600 font-medium">★ {s.rating}</span>
+                      )}
+                      {s.reviewCount && (
+                        <span className="text-[10px] text-muted-foreground">
+                          {s.reviewCount.toLocaleString()} reviews
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <button
-                    onClick={() => addCompetitor(s.title, s.author, "suggested")}
+                    onClick={() =>
+                      addCompetitor(s.title, s.author, "suggested", {
+                        asin: s.asin,
+                        amazonUrl: s.amazonUrl,
+                        rating: s.rating,
+                        reviewCount: s.reviewCount,
+                      })
+                    }
                     disabled={alreadyAdded || isAdding}
-                    className={`flex-shrink-0 flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md transition-colors ${
+                    className={`flex-shrink-0 flex items-center gap-1 text-[10px] font-medium px-2 py-1 rounded-md transition-colors self-center ${
                       alreadyAdded
                         ? "bg-green-100 text-green-700 cursor-default"
                         : "bg-primary text-primary-foreground hover:bg-primary/90"
                     }`}
                   >
-                    {isAdding ? <Loader2 className="w-3 h-3 animate-spin" /> : alreadyAdded ? "Added" : <><Plus className="w-3 h-3" /> Add</>}
+                    {isAdding ? <Loader2 className="w-3 h-3 animate-spin" /> : alreadyAdded ? "Added ✓" : <><Plus className="w-3 h-3" /> Add</>}
                   </button>
                 </div>
               );
@@ -474,7 +513,7 @@ function CompetitorSection({ bookId, competitorData, onUpdate }: { bookId: numbe
 
         {suggestions.length === 0 && !suggestMutation.isPending && (
           <p className="text-xs text-muted-foreground text-center py-2">
-            Click "Get Suggestions" to see AI-recommended bestsellers for your niche
+            Click "Search Amazon" to find real bestselling books in your niche
           </p>
         )}
       </div>

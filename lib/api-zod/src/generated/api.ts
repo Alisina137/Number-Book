@@ -210,7 +210,12 @@ export const SuggestCompetitorsResponse = zod.object({
   "suggestions": zod.array(zod.object({
   "title": zod.string(),
   "author": zod.string(),
-  "reason": zod.string()
+  "reason": zod.string(),
+  "rating": zod.number().optional(),
+  "reviewCount": zod.number().optional(),
+  "asin": zod.string().optional(),
+  "amazonUrl": zod.string().optional(),
+  "image": zod.string().optional()
 }))
 })
 
@@ -227,6 +232,9 @@ export const AddCompetitorBody = zod.object({
   "author": zod.string().optional(),
   "amazonUrl": zod.string().optional(),
   "isbn": zod.string().optional(),
+  "asin": zod.string().optional(),
+  "rating": zod.number().optional(),
+  "reviewCount": zod.number().optional(),
   "addedVia": zod.enum(['url', 'isbn', 'title', 'manual', 'suggested']).optional()
 })
 
