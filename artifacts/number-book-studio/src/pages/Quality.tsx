@@ -59,7 +59,7 @@ export default function Quality() {
             </div>
           </div>
         )}
-        <BookStepNav bookId={bookId} current="quality" />
+        <BookStepNav bookId={bookId} current="quality" bookStatus={book?.status} />
       </aside>
 
       {/* Main content */}

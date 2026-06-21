@@ -24,6 +24,10 @@ export interface Book {
   title?: string | null;
   /** @nullable */
   authorName?: string | null;
+  /** @nullable */
+  analysisData?: string | null;
+  /** @nullable */
+  resourceData?: string | null;
   createdAt: string;
   updatedAt: string;
 }

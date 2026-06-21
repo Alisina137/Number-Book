@@ -28,6 +28,7 @@ import type {
   EntryUpdate,
   ExportRequest,
   ExportResult,
+  GenerateResourcesRequest,
   HealthStatus,
   QualityReport
 } from './api.schemas';
@@ -486,6 +487,148 @@ export const useDeleteBook = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getDeleteBookMutationOptions(options));
+    }
+
+export const getGenerateAnalysisUrl = (id: number,) => {
+
+
+
+
+  return `/api/books/${id}/generate-analysis`
+}
+
+/**
+ * @summary Generate topic analysis for a book
+ */
+export const generateAnalysis = async (id: number, options?: RequestInit): Promise<Book> => {
+
+  return customFetch<Book>(getGenerateAnalysisUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getGenerateAnalysisMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateAnalysis>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateAnalysis>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['generateAnalysis'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateAnalysis>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  generateAnalysis(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateAnalysisMutationResult = NonNullable<Awaited<ReturnType<typeof generateAnalysis>>>
+
+    export type GenerateAnalysisMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Generate topic analysis for a book
+ */
+export const useGenerateAnalysis = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateAnalysis>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateAnalysis>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getGenerateAnalysisMutationOptions(options));
+    }
+
+export const getGenerateResourcesUrl = (id: number,) => {
+
+
+
+
+  return `/api/books/${id}/generate-resources`
+}
+
+/**
+ * @summary Generate research resources for a book
+ */
+export const generateResources = async (id: number,
+    generateResourcesRequest?: GenerateResourcesRequest, options?: RequestInit): Promise<Book> => {
+
+  return customFetch<Book>(getGenerateResourcesUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      generateResourcesRequest,)
+  }
+);}
+
+
+
+
+export const getGenerateResourcesMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateResources>>, TError,{id: number;data?: BodyType<GenerateResourcesRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateResources>>, TError,{id: number;data?: BodyType<GenerateResourcesRequest>}, TContext> => {
+
+const mutationKey = ['generateResources'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateResources>>, {id: number;data?: BodyType<GenerateResourcesRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  generateResources(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateResourcesMutationResult = NonNullable<Awaited<ReturnType<typeof generateResources>>>
+    export type GenerateResourcesMutationBody = BodyType<GenerateResourcesRequest> | undefined
+    export type GenerateResourcesMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Generate research resources for a book
+ */
+export const useGenerateResources = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateResources>>, TError,{id: number;data?: BodyType<GenerateResourcesRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof generateResources>>,
+        TError,
+        {id: number;data?: BodyType<GenerateResourcesRequest>},
+        TContext
+      > => {
+      return useMutation(getGenerateResourcesMutationOptions(options));
     }
 
 export const getGenerateBlueprintUrl = (id: number,) => {

@@ -34,6 +34,8 @@ export type BookStatus = typeof BookStatus[keyof typeof BookStatus];
 
 export const BookStatus = {
   setup: 'setup',
+  analysis: 'analysis',
+  resources: 'resources',
   blueprint: 'blueprint',
   writing: 'writing',
   quality: 'quality',
@@ -55,6 +57,10 @@ export interface Book {
   title?: string | null;
   /** @nullable */
   authorName?: string | null;
+  /** @nullable */
+  analysisData?: string | null;
+  /** @nullable */
+  resourceData?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -104,6 +110,12 @@ export interface BookUpdate {
   status?: string;
   title?: string;
   authorName?: string;
+  analysisData?: string;
+  resourceData?: string;
+}
+
+export interface GenerateResourcesRequest {
+  lockedSections?: string[];
 }
 
 export interface BookStats {

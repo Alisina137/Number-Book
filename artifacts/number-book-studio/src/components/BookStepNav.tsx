@@ -1,20 +1,35 @@
 import { useLocation } from "wouter";
-import { BookOpen, PenLine, ShieldCheck, Download, ChevronLeft } from "lucide-react";
+import { FlaskConical, Library, BookOpen, PenLine, ShieldCheck, Download, ChevronLeft } from "lucide-react";
 
 const STEPS = [
+  { key: "analysis", label: "Analysis", icon: FlaskConical, path: "analysis" },
+  { key: "resources", label: "Resources", icon: Library, path: "resources" },
   { key: "blueprint", label: "Blueprint", icon: BookOpen, path: "blueprint" },
   { key: "write", label: "Write", icon: PenLine, path: "write" },
   { key: "quality", label: "Quality", icon: ShieldCheck, path: "quality" },
   { key: "export", label: "Export", icon: Download, path: "export" },
 ];
 
+const STATUS_ORDER = ["setup", "analysis", "resources", "blueprint", "writing", "quality", "finished"];
+const STEP_STATUSES: Record<string, string> = {
+  analysis: "setup",
+  resources: "analysis",
+  blueprint: "resources",
+  write: "blueprint",
+  quality: "writing",
+  export: "quality",
+};
+
 interface BookStepNavProps {
   bookId: number;
-  current: "blueprint" | "write" | "quality" | "export";
+  current: "analysis" | "resources" | "blueprint" | "write" | "quality" | "export";
+  bookStatus?: string;
 }
 
-export function BookStepNav({ bookId, current }: BookStepNavProps) {
+export function BookStepNav({ bookId, current, bookStatus }: BookStepNavProps) {
   const [, setLocation] = useLocation();
+
+  const currentStatusIndex = STATUS_ORDER.indexOf(bookStatus ?? "setup");
 
   return (
     <div className="space-y-1">
@@ -24,20 +39,30 @@ export function BookStepNav({ bookId, current }: BookStepNavProps) {
       {STEPS.map((step, i) => {
         const Icon = step.icon;
         const isActive = step.key === current;
+        const requiredStatus = STEP_STATUSES[step.key] ?? "setup";
+        const requiredIndex = STATUS_ORDER.indexOf(requiredStatus);
+        const isUnlocked = currentStatusIndex >= requiredIndex;
+
         return (
           <button
             key={step.key}
-            onClick={() => setLocation(`/books/${bookId}/${step.path}`)}
+            onClick={() => isUnlocked && setLocation(`/books/${bookId}/${step.path}`)}
+            disabled={!isUnlocked}
+            title={!isUnlocked ? "Complete the previous step first" : undefined}
             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors text-left ${
               isActive
                 ? "bg-primary/10 text-primary font-medium"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                : isUnlocked
+                ? "text-muted-foreground hover:bg-muted hover:text-foreground"
+                : "text-muted-foreground/40 cursor-not-allowed"
             }`}
           >
             <span className={`flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border ${
               isActive
                 ? "bg-primary text-primary-foreground border-primary"
-                : "border-border bg-background text-muted-foreground"
+                : isUnlocked
+                ? "border-border bg-background text-muted-foreground"
+                : "border-border/40 bg-background text-muted-foreground/40"
             }`}>
               {i + 1}
             </span>

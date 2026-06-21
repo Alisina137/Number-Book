@@ -236,7 +236,7 @@ export default function Write() {
           </div>
         )}
 
-        <BookStepNav bookId={bookId} current="write" />
+        <BookStepNav bookId={bookId} current="write" bookStatus={book?.status} />
       </aside>
 
       {/* Entry list */}

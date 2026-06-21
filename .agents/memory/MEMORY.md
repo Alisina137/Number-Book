@@ -1,0 +1,1 @@
+- [Analysis & Resources steps](analysis-resources-steps.md) — 6-step workflow (Analysis→Resources→Blueprint→Write→Quality→Export), DB columns, AI function signatures, and lock mechanics.

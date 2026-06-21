@@ -1,0 +1,438 @@
+Update the Number Book Studio workflow to add two new mandatory steps before the current Blueprint step.
+
+## Current Flow
+
+1. Configure Book
+2. Blueprint
+3. Write
+4. Quality
+5. Export
+
+## New Flow
+
+1. Configure Book
+2. Analysis (NEW)
+3. Resources (NEW)
+4. Blueprint
+5. Write
+6. Quality
+7. Export
+
+The goal is to significantly improve the quality, uniqueness, depth, and factual accuracy of generated entry titles and written content.
+
+---
+
+# STEP 2: ANALYSIS
+
+Create a new Analysis step immediately after the user finishes Configure Book.
+
+The purpose of this step is to deeply analyze the book topic before generating any blueprint.
+
+## Inputs Available
+
+* Niche
+* Sub-Niche
+* Deep Niche
+* Audience
+* Tone
+* Number of Entries
+* Words Per Entry
+* Book Title
+* Author Name
+
+## Analysis Engine
+
+When the user enters this step, AI should generate a structured topic analysis.
+
+Generate:
+
+### 1. Audience Analysis
+
+Identify:
+
+* reader goals
+* reader pain points
+* reader desires
+* reader knowledge level
+* reader motivations
+
+Example:
+
+For "Productivity Tips for Busy Adults":
+
+Goals:
+
+* get more done
+* reduce stress
+* manage time
+
+Pain Points:
+
+* procrastination
+* distractions
+* burnout
+
+---
+
+### 2. Core Topic Themes
+
+Identify 10–20 major themes related to the topic.
+
+Example:
+
+Time Management
+Focus
+Habit Building
+Planning
+Goal Setting
+Deep Work
+Energy Management
+Delegation
+Automation
+Decision Making
+
+---
+
+### 3. Subtopic Discovery
+
+Generate 50–100 potential subtopics that could be used when creating entries.
+
+Example:
+
+* 2-minute rule
+* calendar blocking
+* weekly review
+* digital minimalism
+* task batching
+* morning routines
+* focus rituals
+
+These should be stored for Blueprint generation.
+
+---
+
+### 4. Angle Analysis
+
+Generate multiple content angles:
+
+Examples:
+
+* beginner-friendly
+* science-backed
+* practical
+* unconventional
+* myth-busting
+* story-driven
+* motivational
+
+Store these angles.
+
+---
+
+### 5. Gap Analysis
+
+Identify commonly repeated ideas in books about this topic.
+
+Then identify:
+
+* underused ideas
+* unique perspectives
+* fresh approaches
+
+The Blueprint generator should prioritize these unique areas.
+
+---
+
+### 6. Topic Coverage Score
+
+Estimate:
+
+* topic breadth
+* complexity
+* available content depth
+
+Then recommend:
+
+* ideal entry count
+* ideal words per entry
+
+Display recommendations but allow user override.
+
+---
+
+### Analysis Output UI
+
+Create a clean dashboard card layout showing:
+
+* Audience Analysis
+* Core Themes
+* Subtopics
+* Angles
+* Gap Analysis
+* Recommendations
+
+Add button:
+
+"Continue to Resources"
+
+---
+
+# STEP 3: RESOURCES
+
+Create a new Resources step between Analysis and Blueprint.
+
+Purpose:
+
+Build a research database that Blueprint and Write steps can use.
+
+---
+
+## Resource Generation
+
+Based on all previous information and Analysis results, AI should generate structured research assets.
+
+Generate:
+
+### 1. Key Concepts
+
+List important concepts relevant to the topic.
+
+Example:
+
+For Productivity:
+
+* Parkinson's Law
+* Pareto Principle
+* Pomodoro Technique
+* Deep Work
+* Flow State
+
+---
+
+### 2. Expert Insights
+
+Generate notable experts associated with the topic.
+
+Example:
+
+* Cal Newport
+* James Clear
+* David Allen
+* Stephen Covey
+
+Store names and associated concepts.
+
+---
+
+### 3. Frameworks & Models
+
+Generate relevant frameworks.
+
+Example:
+
+* Eisenhower Matrix
+* SMART Goals
+* GTD
+* Atomic Habits Framework
+
+Store them.
+
+---
+
+### 4. Statistics & Research Areas
+
+Identify areas where facts, statistics, studies, or research may strengthen content.
+
+Store categories such as:
+
+* productivity research
+* psychology research
+* workplace studies
+* behavioral science
+
+The writing engine can later generate or retrieve supporting information.
+
+---
+
+### 5. Story Opportunities
+
+Generate potential story categories:
+
+* personal stories
+* historical examples
+* business examples
+* case studies
+* everyday situations
+
+Store these for writing.
+
+---
+
+### 6. Quotes & Wisdom Themes
+
+Generate themes suitable for quotes and lessons.
+
+Example:
+
+* discipline
+* consistency
+* patience
+* focus
+
+---
+
+### 7. Content Pillars
+
+Create 5–12 major pillars for the book.
+
+Example:
+
+Pillar 1: Time Management
+Pillar 2: Focus
+Pillar 3: Habits
+Pillar 4: Productivity Systems
+Pillar 5: Energy Management
+
+These pillars should guide Blueprint creation.
+
+---
+
+## Resource Library UI
+
+Display resources in categorized cards.
+
+Add:
+
+* regenerate section button
+* edit section button
+* lock section button
+
+Locked sections cannot be changed by future regenerations.
+
+Add button:
+
+"Generate Blueprint"
+
+---
+
+# BLUEPRINT IMPROVEMENTS
+
+Update Blueprint generation logic.
+
+Do NOT generate blueprint directly from user inputs.
+
+Instead generate Blueprint using:
+
+1. Configure Book data
+2. Analysis data
+3. Resources data
+
+Blueprint must:
+
+* maximize topic coverage
+* avoid duplicate ideas
+* balance all content pillars
+* balance beginner and advanced concepts
+* prioritize unique angles
+* ensure logical progression
+* ensure every entry feels distinct
+
+For a 25-entry book:
+
+* cover all major pillars
+* distribute entries intelligently
+
+For larger books:
+
+* ensure complete topic coverage
+
+Generate entry titles that are:
+
+* curiosity-driven
+* highly specific
+* non-repetitive
+* audience-focused
+* practical
+
+---
+
+# WRITE STEP IMPROVEMENTS
+
+Update Write generation logic.
+
+Each entry should use:
+
+* audience analysis
+* content pillars
+* key concepts
+* frameworks
+* expert insights
+* story opportunities
+* topic angles
+
+Each entry should feel unique.
+
+Avoid repetitive structures.
+
+Mix:
+
+* explanations
+* stories
+* examples
+* lessons
+* actionable advice
+
+Use the selected tone consistently.
+
+Ensure all entries together feel like a professionally planned book rather than isolated articles.
+
+---
+
+# DATABASE CHANGES
+
+Store:
+
+analysisData
+resourceData
+
+inside the book project.
+
+Blueprint and Write steps must read from these stored datasets.
+
+Regenerating Blueprint should not destroy Analysis or Resources.
+
+---
+
+# SIDEBAR UPDATE
+
+Replace:
+
+1 Blueprint
+2 Write
+3 Quality
+4 Export
+
+With:
+
+1 Analysis
+2 Resources
+3 Blueprint
+4 Write
+5 Quality
+6 Export
+
+Update progress indicators and navigation accordingly.
+
+The user should not be able to skip Analysis or Resources before generating Blueprint.
+
+---
+
+# SUCCESS CRITERIA
+
+After implementation:
+
+* Blueprint quality should improve significantly.
+* Entries should cover the topic more comprehensively.
+* Writing should be less repetitive.
+* Books should feel researched and strategically planned.
+* The entire workflow should resemble a professional publishing pipeline rather than simple title generation.

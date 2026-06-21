@@ -29,9 +29,11 @@ export const ListBooksResponseItem = zod.object({
   "numEntries": zod.number(),
   "minWords": zod.number(),
   "maxWords": zod.number(),
-  "status": zod.enum(['setup', 'blueprint', 'writing', 'quality', 'finished']),
+  "status": zod.enum(['setup', 'analysis', 'resources', 'blueprint', 'writing', 'quality', 'finished']),
   "title": zod.string().nullish(),
   "authorName": zod.string().nullish(),
+  "analysisData": zod.string().nullish(),
+  "resourceData": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -72,9 +74,11 @@ export const GetBookResponse = zod.object({
   "numEntries": zod.number(),
   "minWords": zod.number(),
   "maxWords": zod.number(),
-  "status": zod.enum(['setup', 'blueprint', 'writing', 'quality', 'finished']),
+  "status": zod.enum(['setup', 'analysis', 'resources', 'blueprint', 'writing', 'quality', 'finished']),
   "title": zod.string().nullish(),
   "authorName": zod.string().nullish(),
+  "analysisData": zod.string().nullish(),
+  "resourceData": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -98,7 +102,9 @@ export const UpdateBookBody = zod.object({
   "maxWords": zod.number().optional(),
   "status": zod.string().optional(),
   "title": zod.string().optional(),
-  "authorName": zod.string().optional()
+  "authorName": zod.string().optional(),
+  "analysisData": zod.string().optional(),
+  "resourceData": zod.string().optional()
 })
 
 export const UpdateBookResponse = zod.object({
@@ -111,9 +117,11 @@ export const UpdateBookResponse = zod.object({
   "numEntries": zod.number(),
   "minWords": zod.number(),
   "maxWords": zod.number(),
-  "status": zod.enum(['setup', 'blueprint', 'writing', 'quality', 'finished']),
+  "status": zod.enum(['setup', 'analysis', 'resources', 'blueprint', 'writing', 'quality', 'finished']),
   "title": zod.string().nullish(),
   "authorName": zod.string().nullish(),
+  "analysisData": zod.string().nullish(),
+  "resourceData": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -124,6 +132,64 @@ export const UpdateBookResponse = zod.object({
  */
 export const DeleteBookParams = zod.object({
   "id": zod.coerce.number()
+})
+
+
+/**
+ * @summary Generate topic analysis for a book
+ */
+export const GenerateAnalysisParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GenerateAnalysisResponse = zod.object({
+  "id": zod.number(),
+  "niche": zod.string(),
+  "subNiche": zod.string(),
+  "deepNiche": zod.string(),
+  "audience": zod.enum(['children', 'teenagers', 'adults']),
+  "tone": zod.enum(['educational', 'funny', 'inspirational', 'professional', 'casual']),
+  "numEntries": zod.number(),
+  "minWords": zod.number(),
+  "maxWords": zod.number(),
+  "status": zod.enum(['setup', 'analysis', 'resources', 'blueprint', 'writing', 'quality', 'finished']),
+  "title": zod.string().nullish(),
+  "authorName": zod.string().nullish(),
+  "analysisData": zod.string().nullish(),
+  "resourceData": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Generate research resources for a book
+ */
+export const GenerateResourcesParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const GenerateResourcesBody = zod.object({
+  "lockedSections": zod.array(zod.string()).optional()
+})
+
+export const GenerateResourcesResponse = zod.object({
+  "id": zod.number(),
+  "niche": zod.string(),
+  "subNiche": zod.string(),
+  "deepNiche": zod.string(),
+  "audience": zod.enum(['children', 'teenagers', 'adults']),
+  "tone": zod.enum(['educational', 'funny', 'inspirational', 'professional', 'casual']),
+  "numEntries": zod.number(),
+  "minWords": zod.number(),
+  "maxWords": zod.number(),
+  "status": zod.enum(['setup', 'analysis', 'resources', 'blueprint', 'writing', 'quality', 'finished']),
+  "title": zod.string().nullish(),
+  "authorName": zod.string().nullish(),
+  "analysisData": zod.string().nullish(),
+  "resourceData": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
 })
 
 
@@ -144,9 +210,11 @@ export const GenerateBlueprintResponse = zod.object({
   "numEntries": zod.number(),
   "minWords": zod.number(),
   "maxWords": zod.number(),
-  "status": zod.enum(['setup', 'blueprint', 'writing', 'quality', 'finished']),
+  "status": zod.enum(['setup', 'analysis', 'resources', 'blueprint', 'writing', 'quality', 'finished']),
   "title": zod.string().nullish(),
   "authorName": zod.string().nullish(),
+  "analysisData": zod.string().nullish(),
+  "resourceData": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })

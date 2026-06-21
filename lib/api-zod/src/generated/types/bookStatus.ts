@@ -11,6 +11,8 @@ export type BookStatus = typeof BookStatus[keyof typeof BookStatus];
 
 export const BookStatus = {
   setup: 'setup',
+  analysis: 'analysis',
+  resources: 'resources',
   blueprint: 'blueprint',
   writing: 'writing',
   quality: 'quality',

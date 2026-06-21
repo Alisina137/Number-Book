@@ -81,7 +81,7 @@ export default function Blueprint() {
 
   const { data: entries, isLoading: entriesLoading } = useListEntries(bookId, {
     query: {
-      enabled: !!bookId && !!book && book.status !== "setup",
+      enabled: !!bookId && !!book && book.status !== "setup" && book.status !== "resources",
       queryKey: getListEntriesQueryKey(bookId),
     },
   });
@@ -110,7 +110,7 @@ export default function Blueprint() {
   };
 
   useEffect(() => {
-    if (book && book.status === "setup" && !hasAutoTriggered.current && !generateBlueprintMutation.isPending) {
+    if (book && (book.status === "setup" || book.status === "resources") && !hasAutoTriggered.current && !generateBlueprintMutation.isPending) {
       hasAutoTriggered.current = true;
       runGenerate();
     }
@@ -162,7 +162,7 @@ export default function Blueprint() {
             </div>
           </div>
         )}
-        <BookStepNav bookId={bookId} current="blueprint" />
+        <BookStepNav bookId={bookId} current="blueprint" bookStatus={book?.status} />
       </aside>
 
       {/* Main content */}
@@ -172,7 +172,7 @@ export default function Blueprint() {
             <div className="mb-8">
               <div className="flex items-center gap-2 text-muted-foreground text-sm mb-3">
                 <BookOpen className="w-4 h-4" />
-                Step 1 of 4 — Blueprint
+                Step 3 of 6 — Blueprint
               </div>
               <h1 className="text-2xl font-semibold">{book?.deepNiche} Blueprint</h1>
               <p className="text-muted-foreground text-sm mt-1">
@@ -274,7 +274,7 @@ export default function Blueprint() {
             )}
 
             {/* Manual generate button when not loading and no entries and no error */}
-            {!isGenerating && !errorMessage && !hasEntries && !entriesLoading && book?.status !== "setup" && (
+            {!isGenerating && !errorMessage && !hasEntries && !entriesLoading && book?.status !== "setup" && book?.status !== "resources" && (
               <div className="text-center py-16">
                 <p className="text-muted-foreground mb-4">No entries found. Try generating the blueprint.</p>
                 <Button onClick={runGenerate} data-testid="button-generate-now">

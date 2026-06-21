@@ -3,6 +3,8 @@ import healthRouter from "./health";
 import booksRouter from "./books";
 import entriesRouter from "./entries";
 import qualityRouter from "./quality";
+import analysisRouter from "./analysis";
+import resourcesRouter from "./resources";
 
 const router: IRouter = Router();
 
@@ -10,5 +12,7 @@ router.use(healthRouter);
 router.use(booksRouter);
 router.use(entriesRouter);
 router.use(qualityRouter);
+router.use(analysisRouter);
+router.use(resourcesRouter);
 
 export default router;

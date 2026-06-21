@@ -119,6 +119,50 @@ paths:
         "204":
           description: Deleted
 
+  /books/{id}/generate-analysis:
+    post:
+      operationId: generateAnalysis
+      tags: [books]
+      summary: Generate topic analysis for a book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Analysis generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+
+  /books/{id}/generate-resources:
+    post:
+      operationId: generateResources
+      tags: [books]
+      summary: Generate research resources for a book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateResourcesRequest"
+      responses:
+        "200":
+          description: Resources generated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+
   /books/{id}/generate-blueprint:
     post:
       operationId: generateBlueprint
@@ -335,10 +379,14 @@ components:
           type: integer
         status:
           type: string
-          enum: [setup, blueprint, writing, quality, finished]
+          enum: [setup, analysis, resources, blueprint, writing, quality, finished]
         title:
           type: ["string", "null"]
         authorName:
+          type: ["string", "null"]
+        analysisData:
+          type: ["string", "null"]
+        resourceData:
           type: ["string", "null"]
         createdAt:
           type: string
@@ -397,6 +445,18 @@ components:
           type: string
         authorName:
           type: string
+        analysisData:
+          type: string
+        resourceData:
+          type: string
+
+    GenerateResourcesRequest:
+      type: object
+      properties:
+        lockedSections:
+          type: array
+          items:
+            type: string
 
     BookStats:
       type: object

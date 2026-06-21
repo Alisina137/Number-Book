@@ -60,7 +60,7 @@ export default function NewBook() {
       { data: values },
       {
         onSuccess: (book) => {
-          setLocation(`/books/${book.id}/blueprint`);
+          setLocation(`/books/${book.id}/analysis`);
         },
         onError: () => {
           toast({ title: "Failed to create book", variant: "destructive" });

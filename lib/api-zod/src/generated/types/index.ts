@@ -21,6 +21,7 @@ export * from './entryUpdate';
 export * from './exportRequest';
 export * from './exportRequestFormat';
 export * from './exportResult';
+export * from './generateResourcesRequest';
 export * from './healthStatus';
 export * from './qualityIssue';
 export * from './qualityIssueIssueType';

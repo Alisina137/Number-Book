@@ -18,4 +18,6 @@ export interface BookUpdate {
   status?: string;
   title?: string;
   authorName?: string;
+  analysisData?: string;
+  resourceData?: string;
 }

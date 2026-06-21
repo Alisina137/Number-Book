@@ -87,7 +87,7 @@ export default function Export() {
             </div>
           </div>
         )}
-        <BookStepNav bookId={bookId} current="export" />
+        <BookStepNav bookId={bookId} current="export" bookStatus={book?.status} />
       </aside>
 
       {/* Main content */}

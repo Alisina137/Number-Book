@@ -10,6 +10,7 @@ import {
 import { groq, GROQ_MODEL } from "../lib/groq";
 import { cerebras } from "../lib/cerebras";
 import { buildContentPrompt, buildContentSystemPrompt, countWords, regenerateSingleTitle } from "../lib/bookAI";
+import type { AnalysisData, ResourceData } from "../lib/bookAI";
 
 const router: IRouter = Router();
 
@@ -110,6 +111,16 @@ router.post("/books/:bookId/entries/:entryId/generate", async (req, res): Promis
     .set({ status: "generating" })
     .where(eq(entriesTable.id, entry.id));
 
+  // Load analysis and resource data if available
+  let analysis: AnalysisData | null = null;
+  let resources: ResourceData | null = null;
+  try {
+    if (book.analysisData) analysis = JSON.parse(book.analysisData) as AnalysisData;
+    if (book.resourceData) resources = JSON.parse(book.resourceData) as ResourceData;
+  } catch {
+    // proceed without enrichment
+  }
+
   // Generate content with retry for word count
   let content = "";
   let wordCount = 0;
@@ -119,7 +130,7 @@ router.post("/books/:bookId/entries/:entryId/generate", async (req, res): Promis
   try {
     while (attempts < maxAttempts) {
       attempts++;
-      const prompt = buildContentPrompt(book, entry.title);
+      const prompt = buildContentPrompt(book, entry.title, analysis, resources);
       const systemPrompt = buildContentSystemPrompt(book.minWords, book.maxWords);
       const response = await groq.chat.completions.create({
         model: GROQ_MODEL,
