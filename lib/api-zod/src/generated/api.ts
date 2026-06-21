@@ -34,6 +34,7 @@ export const ListBooksResponseItem = zod.object({
   "authorName": zod.string().nullish(),
   "analysisData": zod.string().nullish(),
   "resourceData": zod.string().nullish(),
+  "competitorData": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -79,6 +80,7 @@ export const GetBookResponse = zod.object({
   "authorName": zod.string().nullish(),
   "analysisData": zod.string().nullish(),
   "resourceData": zod.string().nullish(),
+  "competitorData": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -104,7 +106,8 @@ export const UpdateBookBody = zod.object({
   "title": zod.string().optional(),
   "authorName": zod.string().optional(),
   "analysisData": zod.string().optional(),
-  "resourceData": zod.string().optional()
+  "resourceData": zod.string().optional(),
+  "competitorData": zod.string().optional()
 })
 
 export const UpdateBookResponse = zod.object({
@@ -122,6 +125,7 @@ export const UpdateBookResponse = zod.object({
   "authorName": zod.string().nullish(),
   "analysisData": zod.string().nullish(),
   "resourceData": zod.string().nullish(),
+  "competitorData": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -157,6 +161,7 @@ export const GenerateAnalysisResponse = zod.object({
   "authorName": zod.string().nullish(),
   "analysisData": zod.string().nullish(),
   "resourceData": zod.string().nullish(),
+  "competitorData": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -188,6 +193,116 @@ export const GenerateResourcesResponse = zod.object({
   "authorName": zod.string().nullish(),
   "analysisData": zod.string().nullish(),
   "resourceData": zod.string().nullish(),
+  "competitorData": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Get AI-suggested competitor books for this niche
+ */
+export const SuggestCompetitorsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SuggestCompetitorsResponse = zod.object({
+  "suggestions": zod.array(zod.object({
+  "title": zod.string(),
+  "author": zod.string(),
+  "reason": zod.string()
+}))
+})
+
+
+/**
+ * @summary Add a competitor book and trigger AI analysis
+ */
+export const AddCompetitorParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AddCompetitorBody = zod.object({
+  "title": zod.string(),
+  "author": zod.string().optional(),
+  "amazonUrl": zod.string().optional(),
+  "isbn": zod.string().optional(),
+  "addedVia": zod.enum(['url', 'isbn', 'title', 'manual', 'suggested']).optional()
+})
+
+export const AddCompetitorResponse = zod.object({
+  "id": zod.number(),
+  "niche": zod.string(),
+  "subNiche": zod.string(),
+  "deepNiche": zod.string(),
+  "audience": zod.enum(['children', 'teenagers', 'adults']),
+  "tone": zod.enum(['educational', 'funny', 'inspirational', 'professional', 'casual']),
+  "numEntries": zod.number(),
+  "minWords": zod.number(),
+  "maxWords": zod.number(),
+  "status": zod.enum(['setup', 'analysis', 'resources', 'blueprint', 'writing', 'quality', 'finished']),
+  "title": zod.string().nullish(),
+  "authorName": zod.string().nullish(),
+  "analysisData": zod.string().nullish(),
+  "resourceData": zod.string().nullish(),
+  "competitorData": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Remove a competitor book
+ */
+export const RemoveCompetitorParams = zod.object({
+  "id": zod.coerce.number(),
+  "competitorId": zod.coerce.string()
+})
+
+export const RemoveCompetitorResponse = zod.object({
+  "id": zod.number(),
+  "niche": zod.string(),
+  "subNiche": zod.string(),
+  "deepNiche": zod.string(),
+  "audience": zod.enum(['children', 'teenagers', 'adults']),
+  "tone": zod.enum(['educational', 'funny', 'inspirational', 'professional', 'casual']),
+  "numEntries": zod.number(),
+  "minWords": zod.number(),
+  "maxWords": zod.number(),
+  "status": zod.enum(['setup', 'analysis', 'resources', 'blueprint', 'writing', 'quality', 'finished']),
+  "title": zod.string().nullish(),
+  "authorName": zod.string().nullish(),
+  "analysisData": zod.string().nullish(),
+  "resourceData": zod.string().nullish(),
+  "competitorData": zod.string().nullish(),
+  "createdAt": zod.string(),
+  "updatedAt": zod.string()
+})
+
+
+/**
+ * @summary Synthesize intelligence across all competitors
+ */
+export const AnalyzeCompetitorsParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const AnalyzeCompetitorsResponse = zod.object({
+  "id": zod.number(),
+  "niche": zod.string(),
+  "subNiche": zod.string(),
+  "deepNiche": zod.string(),
+  "audience": zod.enum(['children', 'teenagers', 'adults']),
+  "tone": zod.enum(['educational', 'funny', 'inspirational', 'professional', 'casual']),
+  "numEntries": zod.number(),
+  "minWords": zod.number(),
+  "maxWords": zod.number(),
+  "status": zod.enum(['setup', 'analysis', 'resources', 'blueprint', 'writing', 'quality', 'finished']),
+  "title": zod.string().nullish(),
+  "authorName": zod.string().nullish(),
+  "analysisData": zod.string().nullish(),
+  "resourceData": zod.string().nullish(),
+  "competitorData": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })
@@ -215,6 +330,7 @@ export const GenerateBlueprintResponse = zod.object({
   "authorName": zod.string().nullish(),
   "analysisData": zod.string().nullish(),
   "resourceData": zod.string().nullish(),
+  "competitorData": zod.string().nullish(),
   "createdAt": zod.string(),
   "updatedAt": zod.string()
 })

@@ -20,4 +20,5 @@ export interface BookUpdate {
   authorName?: string;
   analysisData?: string;
   resourceData?: string;
+  competitorData?: string;
 }

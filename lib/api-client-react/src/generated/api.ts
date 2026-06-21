@@ -20,10 +20,12 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  AddCompetitorRequest,
   Book,
   BookInput,
   BookStats,
   BookUpdate,
+  CompetitorSuggestionsResponse,
   Entry,
   EntryUpdate,
   ExportRequest,
@@ -629,6 +631,290 @@ export const useGenerateResources = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getGenerateResourcesMutationOptions(options));
+    }
+
+export const getSuggestCompetitorsUrl = (id: number,) => {
+
+
+
+
+  return `/api/books/${id}/competitors/suggest`
+}
+
+/**
+ * @summary Get AI-suggested competitor books for this niche
+ */
+export const suggestCompetitors = async (id: number, options?: RequestInit): Promise<CompetitorSuggestionsResponse> => {
+
+  return customFetch<CompetitorSuggestionsResponse>(getSuggestCompetitorsUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getSuggestCompetitorsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suggestCompetitors>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof suggestCompetitors>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['suggestCompetitors'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof suggestCompetitors>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  suggestCompetitors(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SuggestCompetitorsMutationResult = NonNullable<Awaited<ReturnType<typeof suggestCompetitors>>>
+
+    export type SuggestCompetitorsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Get AI-suggested competitor books for this niche
+ */
+export const useSuggestCompetitors = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suggestCompetitors>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof suggestCompetitors>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getSuggestCompetitorsMutationOptions(options));
+    }
+
+export const getAddCompetitorUrl = (id: number,) => {
+
+
+
+
+  return `/api/books/${id}/competitors/add`
+}
+
+/**
+ * @summary Add a competitor book and trigger AI analysis
+ */
+export const addCompetitor = async (id: number,
+    addCompetitorRequest: AddCompetitorRequest, options?: RequestInit): Promise<Book> => {
+
+  return customFetch<Book>(getAddCompetitorUrl(id),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      addCompetitorRequest,)
+  }
+);}
+
+
+
+
+export const getAddCompetitorMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCompetitor>>, TError,{id: number;data: BodyType<AddCompetitorRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof addCompetitor>>, TError,{id: number;data: BodyType<AddCompetitorRequest>}, TContext> => {
+
+const mutationKey = ['addCompetitor'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof addCompetitor>>, {id: number;data: BodyType<AddCompetitorRequest>}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  addCompetitor(id,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AddCompetitorMutationResult = NonNullable<Awaited<ReturnType<typeof addCompetitor>>>
+    export type AddCompetitorMutationBody = BodyType<AddCompetitorRequest>
+    export type AddCompetitorMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Add a competitor book and trigger AI analysis
+ */
+export const useAddCompetitor = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof addCompetitor>>, TError,{id: number;data: BodyType<AddCompetitorRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof addCompetitor>>,
+        TError,
+        {id: number;data: BodyType<AddCompetitorRequest>},
+        TContext
+      > => {
+      return useMutation(getAddCompetitorMutationOptions(options));
+    }
+
+export const getRemoveCompetitorUrl = (id: number,
+    competitorId: string,) => {
+
+
+
+
+  return `/api/books/${id}/competitors/${competitorId}`
+}
+
+/**
+ * @summary Remove a competitor book
+ */
+export const removeCompetitor = async (id: number,
+    competitorId: string, options?: RequestInit): Promise<Book> => {
+
+  return customFetch<Book>(getRemoveCompetitorUrl(id,competitorId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+export const getRemoveCompetitorMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCompetitor>>, TError,{id: number;competitorId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof removeCompetitor>>, TError,{id: number;competitorId: string}, TContext> => {
+
+const mutationKey = ['removeCompetitor'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof removeCompetitor>>, {id: number;competitorId: string}> = (props) => {
+          const {id,competitorId} = props ?? {};
+
+          return  removeCompetitor(id,competitorId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RemoveCompetitorMutationResult = NonNullable<Awaited<ReturnType<typeof removeCompetitor>>>
+
+    export type RemoveCompetitorMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Remove a competitor book
+ */
+export const useRemoveCompetitor = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof removeCompetitor>>, TError,{id: number;competitorId: string}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof removeCompetitor>>,
+        TError,
+        {id: number;competitorId: string},
+        TContext
+      > => {
+      return useMutation(getRemoveCompetitorMutationOptions(options));
+    }
+
+export const getAnalyzeCompetitorsUrl = (id: number,) => {
+
+
+
+
+  return `/api/books/${id}/competitors/analyze`
+}
+
+/**
+ * @summary Synthesize intelligence across all competitors
+ */
+export const analyzeCompetitors = async (id: number, options?: RequestInit): Promise<Book> => {
+
+  return customFetch<Book>(getAnalyzeCompetitorsUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getAnalyzeCompetitorsMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeCompetitors>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof analyzeCompetitors>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['analyzeCompetitors'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof analyzeCompetitors>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  analyzeCompetitors(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AnalyzeCompetitorsMutationResult = NonNullable<Awaited<ReturnType<typeof analyzeCompetitors>>>
+
+    export type AnalyzeCompetitorsMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Synthesize intelligence across all competitors
+ */
+export const useAnalyzeCompetitors = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof analyzeCompetitors>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof analyzeCompetitors>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getAnalyzeCompetitorsMutationOptions(options));
     }
 
 export const getGenerateBlueprintUrl = (id: number,) => {

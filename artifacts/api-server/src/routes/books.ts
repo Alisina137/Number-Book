@@ -14,7 +14,7 @@ import {
 } from "@workspace/api-zod";
 import { cerebras } from "../lib/cerebras";
 import { generateBlueprint } from "../lib/bookAI";
-import type { AnalysisData, ResourceData } from "../lib/bookAI";
+import type { AnalysisData, ResourceData, CompetitorData } from "../lib/bookAI";
 
 const router: IRouter = Router();
 
@@ -101,12 +101,14 @@ router.post("/books/:id/generate-blueprint", async (req, res): Promise<void> => 
   // Delete any existing entries
   await db.delete(entriesTable).where(eq(entriesTable.bookId, book.id));
 
-  // Load analysis and resource data if available
+  // Load analysis, resource, and competitor data if available
   let analysis: AnalysisData | null = null;
   let resources: ResourceData | null = null;
+  let competitors: CompetitorData | null = null;
   try {
     if (book.analysisData) analysis = JSON.parse(book.analysisData) as AnalysisData;
     if (book.resourceData) resources = JSON.parse(book.resourceData) as ResourceData;
+    if (book.competitorData) competitors = JSON.parse(book.competitorData) as CompetitorData;
   } catch {
     // proceed without enrichment if data is malformed
   }
@@ -114,7 +116,7 @@ router.post("/books/:id/generate-blueprint", async (req, res): Promise<void> => 
   // Generate titles via AI
   let titles: string[];
   try {
-    titles = await generateBlueprint(book, cerebras, analysis, resources);
+    titles = await generateBlueprint(book, cerebras, analysis, resources, competitors);
   } catch (err: unknown) {
     const status = (err as { status?: number }).status ?? 500;
     if (status === 429) {

@@ -1,0 +1,321 @@
+UPGRADE THE ANALYSIS STEP WITH A NEW COMPETITOR INTELLIGENCE SYSTEM
+
+The goal is to create books that outperform existing books in the same niche.
+
+Add a new section inside the Analysis step called:
+
+# COMPETITOR INTELLIGENCE
+
+The user should be able to add competitor books using:
+
+* Amazon URL
+* Book title
+* ISBN
+* Manual entry
+
+The system should also suggest bestseller books automatically based on the niche, sub-niche, and deep niche.
+
+Examples:
+
+Niche:
+Productivity Tips
+
+Suggested Competitors:
+
+* Atomic Habits
+* Deep Work
+* The One Thing
+* Getting Things Done
+* Essentialism
+
+---
+
+# COMPETITOR EXTRACTION
+
+For every competitor book, extract and store:
+
+## Basic Information
+
+* title
+* author
+* subtitle
+* category
+* publication year
+* page count
+* ratings
+* review count
+
+---
+
+## Structural Analysis
+
+Analyze:
+
+* chapter count
+* chapter organization
+* progression of ideas
+* content hierarchy
+* average chapter depth
+
+Store:
+
+competitorStructure
+
+---
+
+## Content Theme Analysis
+
+Extract:
+
+* major themes
+* recurring concepts
+* frameworks
+* methodologies
+* terminology
+
+Store:
+
+competitorThemes
+
+---
+
+## Reader Sentiment Analysis
+
+Analyze reader reviews.
+
+Identify:
+
+### Readers Loved
+
+Examples:
+
+* practical advice
+* actionable tips
+* real-world examples
+* easy-to-read style
+* motivating tone
+
+Store:
+
+readerLikes
+
+---
+
+### Readers Disliked
+
+Examples:
+
+* repetitive content
+* excessive filler
+* weak examples
+* too much theory
+* poor organization
+* shallow explanations
+
+Store:
+
+readerDislikes
+
+---
+
+### Most Mentioned Positive Topics
+
+Generate ranked list.
+
+Example:
+
+1. Practical advice
+2. Actionable steps
+3. Easy implementation
+4. Good storytelling
+5. Strong examples
+
+Store:
+
+positiveSignals
+
+---
+
+### Most Mentioned Negative Topics
+
+Generate ranked list.
+
+Example:
+
+1. Repetition
+2. Filler content
+3. Generic advice
+4. Weak research
+5. Lack of examples
+
+Store:
+
+negativeSignals
+
+---
+
+# WINNING PATTERN DETECTION
+
+Across all competitor books identify:
+
+* common successful themes
+* successful chapter structures
+* successful title styles
+* successful teaching styles
+* successful storytelling patterns
+
+Generate:
+
+winningPatterns
+
+Example:
+
+* starts with mindset shift
+* follows with practical methods
+* includes examples
+* ends with action steps
+
+---
+
+# MARKET GAPS
+
+Analyze all competitors.
+
+Find:
+
+* missing topics
+* weakly covered topics
+* outdated advice
+* opportunities for improvement
+* underexplored subtopics
+
+Generate:
+
+marketGaps
+
+Example:
+
+Competitors discuss time management but rarely discuss energy management.
+
+Competitors focus on office workers but ignore freelancers.
+
+Competitors provide theory but lack implementation systems.
+
+---
+
+# CONTENT DIFFERENTIATION STRATEGY
+
+Generate a report:
+
+How can this book be better than competitors?
+
+Include:
+
+* what to emulate
+* what to avoid
+* what to improve
+* what unique angle to emphasize
+
+Generate:
+
+bookAdvantageStrategy
+
+---
+
+# ANALYSIS DASHBOARD
+
+Display sections:
+
+Competitors
+Reader Loves
+Reader Dislikes
+Winning Patterns
+Market Gaps
+Differentiation Strategy
+
+Use cards and visual scoring.
+
+---
+
+# BLUEPRINT INTEGRATION
+
+Blueprint generation must use:
+
+analysisData
+resourceData
+competitorData
+
+When generating entry titles:
+
+PRIORITIZE:
+
+* topics readers loved
+* patterns readers loved
+* market gaps
+* unique opportunities
+
+AVOID:
+
+* topics readers complained about
+* repetitive structures
+* weak content patterns
+
+Blueprint should intentionally improve upon competitor weaknesses.
+
+---
+
+# WRITE STEP INTEGRATION
+
+When writing entries:
+
+Use:
+
+readerLikes
+winningPatterns
+marketGaps
+bookAdvantageStrategy
+
+Avoid:
+
+readerDislikes
+negativeSignals
+
+Every entry should feel:
+
+* more actionable
+* more useful
+* less repetitive
+* more engaging
+
+than the average competitor book.
+
+---
+
+# COMPETITOR SCORE
+
+For each competitor calculate:
+
+* Content Depth Score
+* Reader Satisfaction Score
+* Structure Score
+* Authority Score
+* Differentiation Opportunity Score
+
+Display a visual comparison dashboard.
+
+---
+
+# SUCCESS CRITERIA
+
+The final book should not simply be generated from the niche.
+
+The final book should be generated from:
+
+1. User topic
+2. Audience analysis
+3. Resource analysis
+4. Competitor intelligence
+5. Reader sentiment
+6. Market gaps
+
+The resulting blueprint and written content should feel significantly stronger than existing books in the same market.

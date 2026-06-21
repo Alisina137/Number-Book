@@ -17,6 +17,7 @@ export const booksTable = pgTable("books", {
   authorName: text("author_name"),
   analysisData: text("analysis_data"),
   resourceData: text("resource_data"),
+  competitorData: text("competitor_data"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

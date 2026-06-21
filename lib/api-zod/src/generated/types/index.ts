@@ -6,6 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './addCompetitorRequest';
+export * from './addCompetitorRequestAddedVia';
 export * from './book';
 export * from './bookAudience';
 export * from './bookInput';
@@ -15,6 +17,8 @@ export * from './bookStats';
 export * from './bookStatus';
 export * from './bookTone';
 export * from './bookUpdate';
+export * from './competitorSuggestion';
+export * from './competitorSuggestionsResponse';
 export * from './entry';
 export * from './entryStatus';
 export * from './entryUpdate';

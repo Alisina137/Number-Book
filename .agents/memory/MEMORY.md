@@ -1,1 +1,2 @@
 - [Analysis & Resources steps](analysis-resources-steps.md) — 6-step workflow (Analysis→Resources→Blueprint→Write→Quality→Export), DB columns, AI function signatures, and lock mechanics.
+- [Competitor Intelligence](competitor-intelligence.md) — Competitor analysis sub-system inside Analysis step: DB column, 4 API routes, 3 AI functions, data model, and Blueprint/Write integration points.

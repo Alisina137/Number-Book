@@ -61,6 +61,8 @@ export interface Book {
   analysisData?: string | null;
   /** @nullable */
   resourceData?: string | null;
+  /** @nullable */
+  competitorData?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -112,10 +114,40 @@ export interface BookUpdate {
   authorName?: string;
   analysisData?: string;
   resourceData?: string;
+  competitorData?: string;
 }
 
 export interface GenerateResourcesRequest {
   lockedSections?: string[];
+}
+
+export type AddCompetitorRequestAddedVia = typeof AddCompetitorRequestAddedVia[keyof typeof AddCompetitorRequestAddedVia];
+
+
+export const AddCompetitorRequestAddedVia = {
+  url: 'url',
+  isbn: 'isbn',
+  title: 'title',
+  manual: 'manual',
+  suggested: 'suggested',
+} as const;
+
+export interface AddCompetitorRequest {
+  title: string;
+  author?: string;
+  amazonUrl?: string;
+  isbn?: string;
+  addedVia?: AddCompetitorRequestAddedVia;
+}
+
+export interface CompetitorSuggestion {
+  title: string;
+  author: string;
+  reason: string;
+}
+
+export interface CompetitorSuggestionsResponse {
+  suggestions: CompetitorSuggestion[];
 }
 
 export interface BookStats {

@@ -28,6 +28,8 @@ export interface Book {
   analysisData?: string | null;
   /** @nullable */
   resourceData?: string | null;
+  /** @nullable */
+  competitorData?: string | null;
   createdAt: string;
   updatedAt: string;
 }

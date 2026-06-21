@@ -198,7 +198,8 @@ export async function generateBlueprint(
   book: Book,
   cerebras: Cerebras,
   analysis?: AnalysisData | null,
-  resources?: ResourceData | null
+  resources?: ResourceData | null,
+  competitors?: CompetitorData | null
 ): Promise<string[]> {
   const pillarsSection = resources?.contentPillars?.length
     ? `\nContent Pillars to cover:\n${resources.contentPillars.map((p) => `- Pillar ${p.number}: ${p.title} — ${p.description}`).join("\n")}`
@@ -220,13 +221,29 @@ export async function generateBlueprint(
     ? `\nRelevant frameworks and models: ${resources.frameworks.join(", ")}`
     : "";
 
+  const competitorGapsSection = competitors?.marketGaps?.length
+    ? `\nMarket gaps to fill (areas competitors miss — prioritise these): ${competitors.marketGaps.join("; ")}`
+    : "";
+
+  const competitorLovesSection = competitors?.competitors?.length && competitors.competitors.some((c) => c.positiveSignals?.length)
+    ? `\nReader-loved patterns from competitors (emulate these): ${competitors.competitors.flatMap((c) => c.positiveSignals ?? []).slice(0, 6).join(", ")}`
+    : "";
+
+  const competitorAvoidSection = competitors?.competitors?.length && competitors.competitors.some((c) => c.negativeSignals?.length)
+    ? `\nReader complaints about competitors (avoid these): ${competitors.competitors.flatMap((c) => c.negativeSignals ?? []).slice(0, 6).join(", ")}`
+    : "";
+
+  const winningPatternsSection = competitors?.winningPatterns?.length
+    ? `\nWinning patterns proven to work across competitors: ${competitors.winningPatterns.join("; ")}`
+    : "";
+
   const prompt = `You are generating a blueprint for a ${book.tone} ${book.niche} book.
 Niche: ${book.niche}
 Sub-Niche: ${book.subNiche}
 Deep Niche: ${book.deepNiche}
 Audience: ${audienceDesc(book.audience)}
 Tone: ${book.tone}
-${pillarsSection}${anglesSection}${uniqueSection}${subtopicsSection}${frameworksSection}
+${pillarsSection}${anglesSection}${uniqueSection}${subtopicsSection}${frameworksSection}${competitorGapsSection}${competitorLovesSection}${competitorAvoidSection}${winningPatternsSection}
 
 Generate exactly ${book.numEntries} unique, creative, and specific entry titles for this book.
 
@@ -236,6 +253,7 @@ Requirements:
 - Titles must be curiosity-driven, highly specific, and audience-focused
 - Distribute entries across all content pillars evenly
 - Ensure logical progression across the book
+- Prioritise topics that fill market gaps competitors miss
 - Each title must feel like it adds something unique the reader hasn't seen before
 
 Output ONLY the numbered list of titles, one per line, like:
@@ -305,11 +323,229 @@ Reply with ONLY the new title. No number, no explanation, no punctuation before 
   return title;
 }
 
+// ─── Competitor Intelligence ─────────────────────────────────────────────────
+
+export interface CompetitorScore {
+  contentDepth: number;
+  readerSatisfaction: number;
+  structure: number;
+  authority: number;
+  differentiationOpportunity: number;
+}
+
+export interface CompetitorStructure {
+  chapterCount?: number;
+  chapterOrganization?: string;
+  progressionOfIdeas?: string;
+  averageChapterDepth?: string;
+}
+
+export interface CompetitorThemes {
+  majorThemes: string[];
+  recurringConcepts: string[];
+  frameworks: string[];
+  methodologies: string[];
+  terminology: string[];
+}
+
+export interface CompetitorBook {
+  id: string;
+  title: string;
+  author?: string;
+  subtitle?: string;
+  addedVia: "url" | "isbn" | "title" | "manual" | "suggested";
+  amazonUrl?: string;
+  isbn?: string;
+  category?: string;
+  publicationYear?: number;
+  pageCount?: number;
+  ratings?: number;
+  reviewCount?: number;
+  analyzed: boolean;
+  competitorStructure?: CompetitorStructure;
+  competitorThemes?: CompetitorThemes;
+  readerLikes?: string[];
+  readerDislikes?: string[];
+  positiveSignals?: string[];
+  negativeSignals?: string[];
+  scores?: CompetitorScore;
+}
+
+export interface CompetitorData {
+  competitors: CompetitorBook[];
+  winningPatterns?: string[];
+  marketGaps?: string[];
+  bookAdvantageStrategy?: string;
+  synthesized?: boolean;
+}
+
+export interface CompetitorSuggestion {
+  title: string;
+  author: string;
+  reason: string;
+}
+
+export async function suggestCompetitors(
+  book: Book,
+  cerebras: Cerebras
+): Promise<CompetitorSuggestion[]> {
+  const prompt = `You are a bestselling book market analyst. Suggest the top 6 bestselling books that are direct competitors to the following book topic.
+
+Book topic:
+- Niche: ${book.niche}
+- Sub-Niche: ${book.subNiche}
+- Deep Niche: ${book.deepNiche}
+- Audience: ${audienceDesc(book.audience)}
+- Tone: ${book.tone}
+
+Return ONLY valid JSON:
+[
+  { "title": "Book Title", "author": "Author Name", "reason": "One sentence why this competes directly with our book" },
+  { "title": "Book Title 2", "author": "Author Name 2", "reason": "One sentence why this competes directly" }
+]
+
+Suggest only real, well-known books. Return exactly 6 suggestions as a JSON array.`;
+
+  const response = await cerebras.chat.completions.create({
+    model: CEREBRAS_MODEL,
+    max_completion_tokens: 1024,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const raw = (response.choices[0]?.message?.content as string) ?? "";
+  const match = raw.match(/\[[\s\S]*\]/);
+  if (!match) throw new Error("No suggestions returned");
+
+  return JSON.parse(match[0]) as CompetitorSuggestion[];
+}
+
+export async function analyzeCompetitorBook(
+  book: Book,
+  competitor: CompetitorBook,
+  cerebras: Cerebras
+): Promise<Omit<CompetitorBook, "id" | "title" | "addedVia" | "analyzed">> {
+  const prompt = `You are an expert book market analyst. Analyze the following competitor book based on your knowledge of it.
+
+Our book topic: ${book.deepNiche} (${book.niche}) for ${audienceDesc(book.audience)}
+
+Competitor book: "${competitor.title}"${competitor.author ? ` by ${competitor.author}` : ""}
+
+Based on your knowledge of this book, provide a detailed analysis. Return ONLY valid JSON:
+
+{
+  "author": "Author name",
+  "subtitle": "Subtitle if known",
+  "category": "Primary Amazon/bookstore category",
+  "publicationYear": 2020,
+  "pageCount": 250,
+  "ratings": 4.7,
+  "reviewCount": 15000,
+  "competitorStructure": {
+    "chapterCount": 12,
+    "chapterOrganization": "How chapters are organized (e.g. chronological, thematic, problem-solution)",
+    "progressionOfIdeas": "How ideas build on each other throughout the book",
+    "averageChapterDepth": "Typically short/medium/long with high/medium/low depth"
+  },
+  "competitorThemes": {
+    "majorThemes": ["Theme 1", "Theme 2", "Theme 3", "Theme 4", "Theme 5"],
+    "recurringConcepts": ["Concept 1", "Concept 2", "Concept 3", "Concept 4"],
+    "frameworks": ["Framework 1", "Framework 2", "Framework 3"],
+    "methodologies": ["Method 1", "Method 2"],
+    "terminology": ["Term 1", "Term 2", "Term 3", "Term 4", "Term 5"]
+  },
+  "readerLikes": ["What readers specifically love about this book", "Specific strength 2", "Specific strength 3", "Specific strength 4", "Specific strength 5"],
+  "readerDislikes": ["What readers specifically criticize", "Specific weakness 2", "Specific weakness 3", "Specific weakness 4"],
+  "positiveSignals": ["Most mentioned positive 1", "Most mentioned positive 2", "Most mentioned positive 3", "Most mentioned positive 4", "Most mentioned positive 5"],
+  "negativeSignals": ["Most mentioned negative 1", "Most mentioned negative 2", "Most mentioned negative 3", "Most mentioned negative 4"],
+  "scores": {
+    "contentDepth": 7,
+    "readerSatisfaction": 8,
+    "structure": 7,
+    "authority": 9,
+    "differentiationOpportunity": 6
+  }
+}
+
+Scores are out of 10. differentiationOpportunity = how much room there is to do better (higher = more room to beat this book).
+Be specific about this exact book, not generic. Return only valid JSON.`;
+
+  const response = await cerebras.chat.completions.create({
+    model: CEREBRAS_MODEL,
+    max_completion_tokens: 2048,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const raw = (response.choices[0]?.message?.content as string) ?? "";
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("Competitor analysis returned invalid JSON");
+
+  return JSON.parse(match[0]);
+}
+
+export async function synthesizeCompetitorIntelligence(
+  book: Book,
+  competitors: CompetitorBook[],
+  cerebras: Cerebras
+): Promise<{ winningPatterns: string[]; marketGaps: string[]; bookAdvantageStrategy: string }> {
+  const competitorSummaries = competitors
+    .filter((c) => c.analyzed)
+    .map((c) => {
+      const likes = c.readerLikes?.join(", ") || "N/A";
+      const dislikes = c.readerDislikes?.join(", ") || "N/A";
+      const themes = c.competitorThemes?.majorThemes?.join(", ") || "N/A";
+      return `- "${c.title}"${c.author ? ` by ${c.author}` : ""}: Readers love: ${likes}. Readers dislike: ${dislikes}. Major themes: ${themes}.`;
+    })
+    .join("\n");
+
+  const prompt = `You are an expert book market strategist. Synthesize competitor intelligence for this book project.
+
+Our book: ${book.deepNiche} (${book.niche}) for ${audienceDesc(book.audience)} — tone: ${book.tone}
+
+Competitor analysis:
+${competitorSummaries}
+
+Generate strategic intelligence. Return ONLY valid JSON:
+
+{
+  "winningPatterns": [
+    "Pattern 1 that works across multiple competitors",
+    "Pattern 2 that works across multiple competitors",
+    "Pattern 3 that works across multiple competitors",
+    "Pattern 4 that works across multiple competitors",
+    "Pattern 5 that works across multiple competitors",
+    "Pattern 6 that works across multiple competitors"
+  ],
+  "marketGaps": [
+    "Gap 1 — topic/angle/audience that competitors miss or cover poorly",
+    "Gap 2 — topic/angle/audience that competitors miss or cover poorly",
+    "Gap 3 — topic/angle/audience that competitors miss or cover poorly",
+    "Gap 4 — topic/angle/audience that competitors miss or cover poorly",
+    "Gap 5 — topic/angle/audience that competitors miss or cover poorly"
+  ],
+  "bookAdvantageStrategy": "A 3-4 sentence paragraph describing exactly how our book should be differentiated. What to emulate from competitors, what to improve on, what unique angle to emphasize, and what to avoid based on reader complaints."
+}
+
+Be specific and actionable. Return only valid JSON.`;
+
+  const response = await cerebras.chat.completions.create({
+    model: CEREBRAS_MODEL,
+    max_completion_tokens: 2048,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const raw = (response.choices[0]?.message?.content as string) ?? "";
+  const match = raw.match(/\{[\s\S]*\}/);
+  if (!match) throw new Error("Synthesis returned invalid JSON");
+
+  return JSON.parse(match[0]);
+}
+
 export function buildContentPrompt(
   book: Book,
   entryTitle: string,
   analysis?: AnalysisData | null,
-  resources?: ResourceData | null
+  resources?: ResourceData | null,
+  competitors?: CompetitorData | null
 ): string {
   const audience =
     book.audience === "children"
@@ -379,7 +615,7 @@ THE CHALLENGE: Write ${Math.max(2, Math.ceil(min / 25))} or more sentences addin
     sectionInstructions = `Write ${sectionSentences} or more complete, detailed sentences about this topic. Include specific examples, numbers, and context. Never write a one-liner.`;
   }
 
-  const contextSection = buildContextSection(analysis, resources);
+  const contextSection = buildContextSection(analysis, resources, competitors);
 
   return `You are writing an entry for a ${tone} ${book.niche} book called "${book.deepNiche}", targeted at ${audience}.
 
@@ -391,7 +627,8 @@ Your response must be between ${min} and ${max} words. Write every sentence in f
 
 function buildContextSection(
   analysis?: AnalysisData | null,
-  resources?: ResourceData | null
+  resources?: ResourceData | null,
+  competitors?: CompetitorData | null
 ): string {
   const parts: string[] = [];
 
@@ -409,6 +646,20 @@ function buildContextSection(
   }
   if (resources?.storyOpportunities?.length) {
     parts.push(`Story/example types that work well: ${resources.storyOpportunities.slice(0, 3).join(", ")}`);
+  }
+  if (competitors?.winningPatterns?.length) {
+    parts.push(`Proven winning patterns from top competitor books: ${competitors.winningPatterns.slice(0, 4).join("; ")}`);
+  }
+  if (competitors?.marketGaps?.length) {
+    parts.push(`Market gaps to address that competitors miss: ${competitors.marketGaps.slice(0, 3).join("; ")}`);
+  }
+  const allLikes = competitors?.competitors?.flatMap((c) => c.readerLikes ?? []) ?? [];
+  if (allLikes.length > 0) {
+    parts.push(`Make content more: ${[...new Set(allLikes)].slice(0, 4).join(", ")}`);
+  }
+  const allDislikes = competitors?.competitors?.flatMap((c) => c.readerDislikes ?? []) ?? [];
+  if (allDislikes.length > 0) {
+    parts.push(`Avoid competitor weaknesses: ${[...new Set(allDislikes)].slice(0, 4).join(", ")}`);
   }
 
   if (parts.length === 0) return "";

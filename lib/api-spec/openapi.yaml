@@ -163,6 +163,93 @@ paths:
               schema:
                 $ref: "#/components/schemas/Book"
 
+  /books/{id}/competitors/suggest:
+    post:
+      operationId: suggestCompetitors
+      tags: [books]
+      summary: Get AI-suggested competitor books for this niche
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Suggested competitors
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CompetitorSuggestionsResponse"
+
+  /books/{id}/competitors/add:
+    post:
+      operationId: addCompetitor
+      tags: [books]
+      summary: Add a competitor book and trigger AI analysis
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCompetitorRequest"
+      responses:
+        "200":
+          description: Updated book with competitor added and analyzed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+
+  /books/{id}/competitors/{competitorId}:
+    delete:
+      operationId: removeCompetitor
+      tags: [books]
+      summary: Remove a competitor book
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: competitorId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Updated book with competitor removed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+
+  /books/{id}/competitors/analyze:
+    post:
+      operationId: analyzeCompetitors
+      tags: [books]
+      summary: Synthesize intelligence across all competitors
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated book with synthesized competitor intelligence
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Book"
+
   /books/{id}/generate-blueprint:
     post:
       operationId: generateBlueprint
@@ -388,6 +475,8 @@ components:
           type: ["string", "null"]
         resourceData:
           type: ["string", "null"]
+        competitorData:
+          type: ["string", "null"]
         createdAt:
           type: string
         updatedAt:
@@ -449,6 +538,8 @@ components:
           type: string
         resourceData:
           type: string
+        competitorData:
+          type: string
 
     GenerateResourcesRequest:
       type: object
@@ -457,6 +548,42 @@ components:
           type: array
           items:
             type: string
+
+    AddCompetitorRequest:
+      type: object
+      required: [title]
+      properties:
+        title:
+          type: string
+        author:
+          type: string
+        amazonUrl:
+          type: string
+        isbn:
+          type: string
+        addedVia:
+          type: string
+          enum: [url, isbn, title, manual, suggested]
+
+    CompetitorSuggestion:
+      type: object
+      required: [title, author, reason]
+      properties:
+        title:
+          type: string
+        author:
+          type: string
+        reason:
+          type: string
+
+    CompetitorSuggestionsResponse:
+      type: object
+      required: [suggestions]
+      properties:
+        suggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/CompetitorSuggestion"
 
     BookStats:
       type: object
