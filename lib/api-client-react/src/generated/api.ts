@@ -35,6 +35,7 @@ import type {
   GenerateResourcesRequest,
   HealthStatus,
   QualityReport,
+  SuggestCompetitorsBody,
   TitleSuggestionsResponse
 } from './api.schemas';
 
@@ -788,14 +789,16 @@ export const getSuggestCompetitorsUrl = (id: number,) => {
 /**
  * @summary Get AI-suggested competitor books for this niche
  */
-export const suggestCompetitors = async (id: number, options?: RequestInit): Promise<CompetitorSuggestionsResponse> => {
+export const suggestCompetitors = async (id: number,
+    suggestCompetitorsBody?: SuggestCompetitorsBody, options?: RequestInit): Promise<CompetitorSuggestionsResponse> => {
 
   return customFetch<CompetitorSuggestionsResponse>(getSuggestCompetitorsUrl(id),
   {
     ...options,
-    method: 'POST'
-
-
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      suggestCompetitorsBody,)
   }
 );}
 
@@ -803,8 +806,8 @@ export const suggestCompetitors = async (id: number, options?: RequestInit): Pro
 
 
 export const getSuggestCompetitorsMutationOptions = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suggestCompetitors>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
-): UseMutationOptions<Awaited<ReturnType<typeof suggestCompetitors>>, TError,{id: number}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suggestCompetitors>>, TError,{id: number;data?: BodyType<SuggestCompetitorsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof suggestCompetitors>>, TError,{id: number;data?: BodyType<SuggestCompetitorsBody>}, TContext> => {
 
 const mutationKey = ['suggestCompetitors'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -816,10 +819,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof suggestCompetitors>>, {id: number}> = (props) => {
-          const {id} = props ?? {};
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof suggestCompetitors>>, {id: number;data?: BodyType<SuggestCompetitorsBody>}> = (props) => {
+          const {id,data} = props ?? {};
 
-          return  suggestCompetitors(id,requestOptions)
+          return  suggestCompetitors(id,data,requestOptions)
         }
 
 
@@ -830,18 +833,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type SuggestCompetitorsMutationResult = NonNullable<Awaited<ReturnType<typeof suggestCompetitors>>>
-
+    export type SuggestCompetitorsMutationBody = BodyType<SuggestCompetitorsBody> | undefined
     export type SuggestCompetitorsMutationError = ErrorType<unknown>
 
     /**
  * @summary Get AI-suggested competitor books for this niche
  */
 export const useSuggestCompetitors = <TError = ErrorType<unknown>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suggestCompetitors>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suggestCompetitors>>, TError,{id: number;data?: BodyType<SuggestCompetitorsBody>}, TContext>, request?: SecondParameter<typeof customFetch>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof suggestCompetitors>>,
         TError,
-        {id: number},
+        {id: number;data?: BodyType<SuggestCompetitorsBody>},
         TContext
       > => {
       return useMutation(getSuggestCompetitorsMutationOptions(options));

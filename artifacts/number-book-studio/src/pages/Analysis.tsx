@@ -452,7 +452,23 @@ function TitleSuggestionsPanel({ bookId, currentTitle, onTitleApplied }: {
 
 // ─── Competitor Intelligence Section ──────────────────────────────────────────
 
-function CompetitorSection({ bookId, competitorData, onUpdate }: { bookId: number; competitorData: CompetitorData; onUpdate: () => void }) {
+function buildDefaultTags(book: { niche: string; subNiche: string; deepNiche?: string | null }): string[] {
+  const dn = book.deepNiche || book.subNiche;
+  return [
+    dn,
+    `${book.subNiche} ${book.niche}`,
+    `${book.niche} guide`,
+    `best ${book.subNiche} books`,
+    `${dn} for beginners`,
+  ].filter(Boolean) as string[];
+}
+
+function CompetitorSection({ bookId, book, competitorData, onUpdate }: {
+  bookId: number;
+  book: { niche: string; subNiche: string; deepNiche?: string | null } | undefined;
+  competitorData: CompetitorData;
+  onUpdate: () => void;
+}) {
   const [suggestions, setSuggestions] = useState<CompetitorSuggestion[]>([]);
   const [suggestError, setSuggestError] = useState<string | null>(null);
   const [addingIds, setAddingIds] = useState<Set<string>>(new Set());
@@ -461,6 +477,8 @@ function CompetitorSection({ bookId, competitorData, onUpdate }: { bookId: numbe
   const [manualAuthor, setManualAuthor] = useState("");
   const [isAddingManual, setIsAddingManual] = useState(false);
   const [manualError, setManualError] = useState<string | null>(null);
+  const [tags, setTags] = useState<string[]>(() => book ? buildDefaultTags(book) : []);
+  const [tagInput, setTagInput] = useState("");
 
   const suggestMutation = useSuggestCompetitors();
   const addMutation = useAddCompetitor();
@@ -472,10 +490,19 @@ function CompetitorSection({ bookId, competitorData, onUpdate }: { bookId: numbe
   const hasCompetitors = competitors.length > 0;
   const alreadyAddedTitles = new Set(competitors.map((c) => c.title.toLowerCase()));
 
+  const addTag = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed || tags.includes(trimmed)) return;
+    setTags((prev) => [...prev, trimmed]);
+    setTagInput("");
+  };
+
+  const removeTag = (tag: string) => setTags((prev) => prev.filter((t) => t !== tag));
+
   const loadSuggestions = () => {
     setSuggestError(null);
     suggestMutation.mutate(
-      { id: bookId },
+      { id: bookId, data: { tags } },
       {
         onSuccess: (data) => setSuggestions(data.suggestions ?? []),
         onError: (err: unknown) => {
@@ -562,18 +589,59 @@ function CompetitorSection({ bookId, competitorData, onUpdate }: { bookId: numbe
             size="sm"
             variant="outline"
             onClick={loadSuggestions}
-            disabled={suggestMutation.isPending}
+            disabled={suggestMutation.isPending || tags.length === 0}
             className="h-7 text-xs"
           >
             {suggestMutation.isPending ? (
-              <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Loading…</>
+              <><Loader2 className="w-3 h-3 mr-1 animate-spin" /> Searching…</>
             ) : suggestions.length > 0 ? (
               <><RefreshCw className="w-3 h-3 mr-1" /> Refresh</>
             ) : (
               <><Sparkles className="w-3 h-3 mr-1" /> Search Amazon</>
-
             )}
           </Button>
+        </div>
+
+        {/* Tag input */}
+        <div className="mb-4">
+          <p className="text-[11px] text-muted-foreground mb-2">Search tags — Amazon will be queried for each tag. Add or remove to refine results.</p>
+          <div className="flex flex-wrap gap-1.5 mb-2">
+            {tags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 bg-primary/10 text-primary text-[11px] font-medium px-2 py-0.5 rounded-full"
+              >
+                {tag}
+                <button
+                  onClick={() => removeTag(tag)}
+                  className="hover:text-destructive transition-colors ml-0.5"
+                  aria-label={`Remove tag ${tag}`}
+                >
+                  <X className="w-2.5 h-2.5" />
+                </button>
+              </span>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <Input
+              value={tagInput}
+              onChange={(e) => setTagInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") { e.preventDefault(); addTag(tagInput); }
+              }}
+              placeholder="Add a tag…"
+              className="h-7 text-xs"
+            />
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => addTag(tagInput)}
+              disabled={!tagInput.trim()}
+              className="h-7 text-xs px-3 flex-shrink-0"
+            >
+              <Plus className="w-3 h-3" />
+            </Button>
+          </div>
         </div>
 
         {suggestError && (
@@ -1047,6 +1115,7 @@ export default function Analysis() {
                 {/* ─── Competitor Intelligence ─── */}
                 <CompetitorSection
                   bookId={bookId}
+                  book={book}
                   competitorData={competitorData}
                   onUpdate={refreshBook}
                 />

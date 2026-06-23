@@ -39,8 +39,10 @@ router.post("/books/:id/competitors/suggest", async (req, res): Promise<void> =>
   const [book] = await db.select().from(booksTable).where(eq(booksTable.id, id));
   if (!book) { res.status(404).json({ error: "Book not found" }); return; }
 
+  const tags: string[] | undefined = Array.isArray(req.body?.tags) ? req.body.tags : undefined;
+
   try {
-    const suggestions = await searchAmazonBooksForCompetitors(book);
+    const suggestions = await searchAmazonBooksForCompetitors(book, tags);
     res.json({ suggestions });
   } catch (err) {
     const message = (err as { message?: string }).message ?? "Unknown error";

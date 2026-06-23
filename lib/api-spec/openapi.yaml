@@ -214,6 +214,18 @@ paths:
           required: true
           schema:
             type: integer
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tags:
+                  type: array
+                  items:
+                    type: string
+                  description: Search tags to use when querying Amazon for competitor books
       responses:
         "200":
           description: Suggested competitors

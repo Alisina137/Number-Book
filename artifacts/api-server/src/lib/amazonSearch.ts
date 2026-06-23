@@ -1,31 +1,7 @@
 import type { Book } from "@workspace/db";
 
-const GOOGLE_BOOKS_BASE = "https://www.googleapis.com/books/v1/volumes";
-
-interface GoogleBooksVolume {
-  id: string;
-  volumeInfo: {
-    title: string;
-    subtitle?: string;
-    authors?: string[];
-    averageRating?: number;
-    ratingsCount?: number;
-    imageLinks?: { thumbnail?: string; smallThumbnail?: string };
-    industryIdentifiers?: Array<{ type: string; identifier: string }>;
-    infoLink?: string;
-    canonicalVolumeLink?: string;
-    categories?: string[];
-    publishedDate?: string;
-  };
-  saleInfo?: {
-    buyLink?: string;
-  };
-}
-
-interface GoogleBooksResponse {
-  totalItems?: number;
-  items?: GoogleBooksVolume[];
-}
+const SCALE_SERP_BASE = "https://api.scaleserp.com/search";
+const SCALE_SERP_API_KEY = process.env.SCALE_SERP_API_KEY ?? "";
 
 export interface AmazonBookSuggestion {
   title: string;
@@ -38,80 +14,90 @@ export interface AmazonBookSuggestion {
   image?: string;
 }
 
-function buildAmazonSearchUrl(title: string, author?: string): string {
-  const q = [title, author].filter(Boolean).join(" ");
-  return `https://www.amazon.com/s?k=${encodeURIComponent(q)}&i=stripbooks`;
+interface ScaleSerpAmazonResult {
+  title?: string;
+  asin?: string;
+  link?: string;
+  rating?: number;
+  ratings_total?: number;
+  image?: string;
+  authors?: Array<{ name: string; link?: string }>;
+  price?: string;
 }
 
-function buildReason(vol: GoogleBooksVolume, niche: string): string {
-  const parts: string[] = [];
-  if (vol.volumeInfo.averageRating) parts.push(`★ ${vol.volumeInfo.averageRating}`);
-  if (vol.volumeInfo.ratingsCount) parts.push(`${vol.volumeInfo.ratingsCount.toLocaleString()} ratings`);
-  if (vol.volumeInfo.publishedDate) parts.push(vol.volumeInfo.publishedDate.slice(0, 4));
-  parts.push(`in ${niche}`);
-  return parts.join(" · ");
+interface ScaleSerpResponse {
+  amazon_results?: ScaleSerpAmazonResult[];
+  error?: string;
 }
 
-async function searchGoogleBooks(query: string): Promise<GoogleBooksVolume[]> {
+async function searchAmazonByTag(tag: string): Promise<ScaleSerpAmazonResult[]> {
+  if (!SCALE_SERP_API_KEY) throw new Error("SCALE_SERP_API_KEY is not set");
+
   const params = new URLSearchParams({
-    q: query,
-    orderBy: "relevance",
-    maxResults: "20",
-    printType: "books",
-    langRestrict: "en",
+    api_key: SCALE_SERP_API_KEY,
+    search_type: "amazon",
+    amazon_domain: "amazon.com",
+    q: `${tag} book`,
+    output: "json",
   });
 
-  const resp = await fetch(`${GOOGLE_BOOKS_BASE}?${params}`);
-  if (!resp.ok) throw new Error(`Google Books API error: ${resp.status}`);
+  const resp = await fetch(`${SCALE_SERP_BASE}?${params}`);
+  if (!resp.ok) throw new Error(`Scale SERP API error: ${resp.status}`);
 
-  const data = (await resp.json()) as GoogleBooksResponse;
-  return data.items ?? [];
+  const data = (await resp.json()) as ScaleSerpResponse;
+  if (data.error) throw new Error(`Scale SERP error: ${data.error}`);
+
+  return data.amazon_results ?? [];
 }
 
 export async function searchAmazonBooksForCompetitors(
-  book: Book
+  book: Book,
+  tags?: string[]
 ): Promise<AmazonBookSuggestion[]> {
-  const queries = [
-    `${book.deepNiche || book.subNiche} ${book.niche}`,
-    `${book.subNiche} ${book.niche} guide`,
-  ];
+  const searchTags = tags && tags.length > 0
+    ? tags
+    : [
+        `${book.deepNiche || book.subNiche} ${book.niche}`,
+        `${book.subNiche} ${book.niche} guide`,
+      ];
 
   const seen = new Set<string>();
   const results: AmazonBookSuggestion[] = [];
 
-  for (const query of queries) {
+  for (const tag of searchTags) {
     if (results.length >= 12) break;
 
-    let items: GoogleBooksVolume[];
+    let items: ScaleSerpAmazonResult[];
     try {
-      items = await searchGoogleBooks(query);
+      items = await searchAmazonByTag(tag);
     } catch (err) {
-      console.error("Google Books search error:", err);
+      console.error(`Scale SERP search error for tag "${tag}":`, err);
       continue;
     }
 
     for (const item of items) {
       if (results.length >= 12) break;
+      if (!item.title) continue;
 
-      const v = item.volumeInfo;
-      if (!v.title) continue;
-
-      const key = v.title.toLowerCase().slice(0, 40);
+      const key = item.title.toLowerCase().slice(0, 40);
       if (seen.has(key)) continue;
       seen.add(key);
 
-      const author = (v.authors ?? []).slice(0, 2).join(", ") || "Unknown Author";
-      const thumbnail = v.imageLinks?.thumbnail
-        ?? v.imageLinks?.smallThumbnail;
+      const author = item.authors?.map((a) => a.name).slice(0, 2).join(", ") ?? "Unknown Author";
+      const reasonParts: string[] = [];
+      if (item.rating) reasonParts.push(`★ ${item.rating}`);
+      if (item.ratings_total) reasonParts.push(`${item.ratings_total.toLocaleString()} ratings`);
+      reasonParts.push(`"${tag}"`);
 
       results.push({
-        title: v.title,
+        title: item.title,
         author,
-        reason: buildReason(item, book.niche),
-        rating: v.averageRating,
-        reviewCount: v.ratingsCount,
-        amazonUrl: buildAmazonSearchUrl(v.title, v.authors?.[0]),
-        image: thumbnail,
+        reason: reasonParts.join(" · "),
+        rating: item.rating,
+        reviewCount: item.ratings_total,
+        asin: item.asin,
+        amazonUrl: item.link ?? (item.asin ? `https://www.amazon.com/dp/${item.asin}` : undefined),
+        image: item.image,
       });
     }
   }

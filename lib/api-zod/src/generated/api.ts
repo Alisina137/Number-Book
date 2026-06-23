@@ -236,6 +236,10 @@ export const SuggestCompetitorsParams = zod.object({
   "id": zod.coerce.number()
 })
 
+export const SuggestCompetitorsBody = zod.object({
+  "tags": zod.array(zod.string()).optional().describe('Search tags to use when querying Amazon for competitor books')
+})
+
 export const SuggestCompetitorsResponse = zod.object({
   "suggestions": zod.array(zod.object({
   "title": zod.string(),

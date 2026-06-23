@@ -279,3 +279,8 @@ export interface QualityReport {
   issues: QualityIssue[];
 }
 
+export type SuggestCompetitorsBody = {
+  /** Search tags to use when querying Amazon for competitor books */
+  tags?: string[];
+};
+
