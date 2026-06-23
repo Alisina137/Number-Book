@@ -37,7 +37,7 @@ export default function Quality() {
   });
 
   return (
-    <div className="flex h-full min-h-screen">
+    <div className="flex h-full">
       {/* Sidebar */}
       <aside className="w-52 flex-shrink-0 border-r border-border bg-muted/30 p-5 flex flex-col gap-6">
         {book && (
