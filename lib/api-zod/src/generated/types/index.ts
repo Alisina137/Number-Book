@@ -33,3 +33,5 @@ export * from './qualityIssue';
 export * from './qualityIssueIssueType';
 export * from './qualityIssueSeverity';
 export * from './qualityReport';
+export * from './titleSuggestion';
+export * from './titleSuggestionsResponse';

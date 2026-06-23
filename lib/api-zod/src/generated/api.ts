@@ -200,6 +200,23 @@ export const GenerateResourcesResponse = zod.object({
 
 
 /**
+ * @summary Suggest 3 KDP titles based on niche and market demand
+ */
+export const SuggestTitlesParams = zod.object({
+  "id": zod.coerce.number()
+})
+
+export const SuggestTitlesResponse = zod.object({
+  "suggestions": zod.array(zod.object({
+  "title": zod.string(),
+  "subtitle": zod.string(),
+  "fullTitle": zod.string(),
+  "rationale": zod.string()
+}))
+})
+
+
+/**
  * @summary Suggest deep niche ideas based on niche and sub-niche
  */
 export const SuggestDeepNicheBody = zod.object({

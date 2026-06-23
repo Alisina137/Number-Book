@@ -251,6 +251,17 @@ export interface QualityIssue {
   description: string;
 }
 
+export interface TitleSuggestion {
+  title: string;
+  subtitle: string;
+  fullTitle: string;
+  rationale: string;
+}
+
+export interface TitleSuggestionsResponse {
+  suggestions: TitleSuggestion[];
+}
+
 export interface DeepNicheSuggestRequest {
   niche: string;
   subNiche: string;

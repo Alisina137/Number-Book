@@ -163,6 +163,27 @@ paths:
               schema:
                 $ref: "#/components/schemas/Book"
 
+  /books/{id}/suggest-titles:
+    post:
+      operationId: suggestTitles
+      tags: [books]
+      summary: Suggest 3 KDP titles based on niche and market demand
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Title suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TitleSuggestionsResponse"
+        "404":
+          description: Not found
+
   /niches/suggest-deep:
     post:
       operationId: suggestDeepNiche
@@ -722,6 +743,28 @@ components:
           enum: [warning, error]
         description:
           type: string
+
+    TitleSuggestion:
+      type: object
+      required: [title, subtitle, fullTitle, rationale]
+      properties:
+        title:
+          type: string
+        subtitle:
+          type: string
+        fullTitle:
+          type: string
+        rationale:
+          type: string
+
+    TitleSuggestionsResponse:
+      type: object
+      required: [suggestions]
+      properties:
+        suggestions:
+          type: array
+          items:
+            $ref: "#/components/schemas/TitleSuggestion"
 
     DeepNicheSuggestRequest:
       type: object

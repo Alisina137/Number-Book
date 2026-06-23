@@ -9,6 +9,8 @@ import {
   useAddCompetitor,
   useRemoveCompetitor,
   useAnalyzeCompetitors,
+  useSuggestTitles,
+  useUpdateBook,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -17,7 +19,7 @@ import {
   FlaskConical, ArrowRight, Loader2, RefreshCw, AlertCircle,
   Users, Layers, List, Compass, Search, BarChart2,
   Trophy, ThumbsUp, ThumbsDown, Target, Lightbulb, Plus,
-  X, Sparkles, BookOpen, TrendingUp, Zap,
+  X, Sparkles, BookOpen, TrendingUp, Zap, Type, Check,
 } from "lucide-react";
 import { BookStepNav } from "@/components/BookStepNav";
 
@@ -321,6 +323,130 @@ function CompetitorCard({ competitor, onRemove, isRemoving }: { competitor: Comp
         </div>
       )}
     </motion.div>
+  );
+}
+
+// ─── Title Suggestions Panel ──────────────────────────────────────────────────
+
+interface TitleSuggestion {
+  title: string;
+  subtitle: string;
+  fullTitle: string;
+  rationale: string;
+}
+
+function TitleSuggestionsPanel({ bookId, currentTitle, onTitleApplied }: {
+  bookId: number;
+  currentTitle?: string | null;
+  onTitleApplied: () => void;
+}) {
+  const [suggestions, setSuggestions] = useState<TitleSuggestion[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [appliedIdx, setAppliedIdx] = useState<number | null>(null);
+
+  const suggestMutation = useSuggestTitles();
+  const updateBook = useUpdateBook();
+
+  const handleSuggest = () => {
+    setError(null);
+    setSuggestions([]);
+    setAppliedIdx(null);
+    suggestMutation.mutate(
+      { id: bookId },
+      {
+        onSuccess: (data) => setSuggestions(data.suggestions ?? []),
+        onError: (err: unknown) => {
+          setError(
+            (err as { response?: { data?: { error?: string } } })?.response?.data?.error
+            ?? "Title suggestion failed"
+          );
+        },
+      }
+    );
+  };
+
+  const applyTitle = (suggestion: TitleSuggestion, idx: number) => {
+    updateBook.mutate(
+      { id: bookId, data: { title: suggestion.fullTitle } },
+      {
+        onSuccess: () => {
+          setAppliedIdx(idx);
+          onTitleApplied();
+        },
+      }
+    );
+  };
+
+  return (
+    <div className="bg-card border border-card-border rounded-xl p-5 mb-6">
+      <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center gap-2">
+          <Type className="w-4 h-4 text-muted-foreground" />
+          <h2 className="font-medium text-sm text-foreground">Book Title</h2>
+        </div>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleSuggest}
+          disabled={suggestMutation.isPending}
+          className="h-7 text-xs gap-1.5"
+        >
+          {suggestMutation.isPending
+            ? <><Loader2 className="w-3 h-3 animate-spin" /> Thinking…</>
+            : <><Sparkles className="w-3 h-3" /> Suggest 3 Titles</>}
+        </Button>
+      </div>
+
+      {currentTitle && suggestions.length === 0 && !suggestMutation.isPending && (
+        <p className="text-sm text-foreground font-medium mt-2 truncate">{currentTitle}</p>
+      )}
+      {!currentTitle && suggestions.length === 0 && !suggestMutation.isPending && (
+        <p className="text-xs text-muted-foreground mt-2">No title set yet — click "Suggest 3 Titles" to generate AI-powered options based on your niche and market data.</p>
+      )}
+
+      {error && (
+        <p className="text-xs text-destructive bg-destructive/10 rounded-lg px-3 py-2 mt-3">{error}</p>
+      )}
+
+      {suggestions.length > 0 && (
+        <div className="mt-4 space-y-3">
+          {suggestions.map((s, i) => {
+            const isApplied = appliedIdx === i;
+            const isApplying = updateBook.isPending && appliedIdx === null;
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.07 }}
+                className={`rounded-lg border p-3.5 transition-colors ${isApplied ? "border-green-400 bg-green-50/50" : "border-border bg-muted/30 hover:bg-muted/60"}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-foreground leading-snug">{s.title}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{s.subtitle}</p>
+                    <p className="text-[11px] text-primary/80 mt-1.5 italic">{s.rationale}</p>
+                  </div>
+                  <button
+                    onClick={() => applyTitle(s, i)}
+                    disabled={isApplied || isApplying}
+                    className={`flex-shrink-0 flex items-center gap-1 text-[11px] font-medium px-2.5 py-1.5 rounded-md transition-colors mt-0.5 ${
+                      isApplied
+                        ? "bg-green-100 text-green-700 cursor-default"
+                        : "bg-primary text-primary-foreground hover:bg-primary/90"
+                    }`}
+                  >
+                    {isApplied
+                      ? <><Check className="w-3 h-3" /> Applied</>
+                      : "Use This"}
+                  </button>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -792,6 +918,15 @@ export default function Analysis() {
                 Deep topic intelligence and competitor analysis to power a smarter Blueprint
               </p>
             </div>
+
+            {/* Title Suggestions */}
+            {book && (
+              <TitleSuggestionsPanel
+                bookId={bookId}
+                currentTitle={book.title}
+                onTitleApplied={() => queryClient.invalidateQueries({ queryKey: getGetBookQueryKey(bookId) })}
+              />
+            )}
 
             <AnimatePresence>
               {isGenerating && (

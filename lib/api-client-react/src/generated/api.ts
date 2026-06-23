@@ -34,7 +34,8 @@ import type {
   ExportResult,
   GenerateResourcesRequest,
   HealthStatus,
-  QualityReport
+  QualityReport,
+  TitleSuggestionsResponse
 } from './api.schemas';
 
 import { customFetch } from '../custom-fetch';
@@ -633,6 +634,76 @@ export const useGenerateResources = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getGenerateResourcesMutationOptions(options));
+    }
+
+export const getSuggestTitlesUrl = (id: number,) => {
+
+
+
+
+  return `/api/books/${id}/suggest-titles`
+}
+
+/**
+ * @summary Suggest 3 KDP titles based on niche and market demand
+ */
+export const suggestTitles = async (id: number, options?: RequestInit): Promise<TitleSuggestionsResponse> => {
+
+  return customFetch<TitleSuggestionsResponse>(getSuggestTitlesUrl(id),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+export const getSuggestTitlesMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suggestTitles>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof suggestTitles>>, TError,{id: number}, TContext> => {
+
+const mutationKey = ['suggestTitles'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof suggestTitles>>, {id: number}> = (props) => {
+          const {id} = props ?? {};
+
+          return  suggestTitles(id,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SuggestTitlesMutationResult = NonNullable<Awaited<ReturnType<typeof suggestTitles>>>
+
+    export type SuggestTitlesMutationError = ErrorType<void>
+
+    /**
+ * @summary Suggest 3 KDP titles based on niche and market demand
+ */
+export const useSuggestTitles = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suggestTitles>>, TError,{id: number}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof suggestTitles>>,
+        TError,
+        {id: number},
+        TContext
+      > => {
+      return useMutation(getSuggestTitlesMutationOptions(options));
     }
 
 export const getSuggestDeepNicheUrl = () => {
