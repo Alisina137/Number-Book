@@ -1,7 +1,7 @@
 import type { Book } from "@workspace/db";
 
-const SCALE_SERP_BASE = "https://api.scaleserp.com/search";
-const SCALE_SERP_API_KEY = process.env.SCALE_SERP_API_KEY ?? "";
+const OPEN_LIBRARY_BASE = "https://openlibrary.org/search.json";
+const COVER_BASE = "https://covers.openlibrary.org/b/id";
 
 export interface AmazonBookSuggestion {
   title: string;
@@ -14,47 +14,45 @@ export interface AmazonBookSuggestion {
   image?: string;
 }
 
-interface ScaleSerpAmazonResult {
+interface OpenLibraryDoc {
   title?: string;
-  asin?: string;
-  link?: string;
-  rating?: number;
-  ratings_total?: number;
-  image?: string;
-  authors?: Array<{ name: string; link?: string }>;
-  price?: string;
+  author_name?: string[];
+  cover_i?: number;
+  first_publish_year?: number;
+  ratings_average?: number;
+  ratings_count?: number;
+  isbn?: string[];
 }
 
-interface ScaleSerpResponse {
-  amazon_results?: ScaleSerpAmazonResult[];
-  error?: string;
+interface OpenLibraryResponse {
+  docs?: OpenLibraryDoc[];
+  numFound?: number;
 }
 
-async function searchAmazonByTag(tag: string): Promise<ScaleSerpAmazonResult[]> {
-  if (!SCALE_SERP_API_KEY) throw new Error("SCALE_SERP_API_KEY is not set");
+function buildAmazonSearchUrl(title: string, author?: string): string {
+  const q = [title, author].filter(Boolean).join(" ");
+  return `https://www.amazon.com/s?k=${encodeURIComponent(q)}&i=stripbooks`;
+}
 
+async function searchOpenLibrary(query: string): Promise<OpenLibraryDoc[]> {
   const params = new URLSearchParams({
-    api_key: SCALE_SERP_API_KEY,
-    search_type: "amazon",
-    amazon_domain: "amazon.com",
-    q: `${tag} book`,
-    output: "json",
+    q: query,
+    limit: "20",
+    fields: "title,author_name,cover_i,first_publish_year,ratings_average,ratings_count,isbn",
   });
 
-  const resp = await fetch(`${SCALE_SERP_BASE}?${params}`);
-  if (!resp.ok) throw new Error(`Scale SERP API error: ${resp.status}`);
+  const resp = await fetch(`${OPEN_LIBRARY_BASE}?${params}`);
+  if (!resp.ok) throw new Error(`Open Library API error: ${resp.status}`);
 
-  const data = (await resp.json()) as ScaleSerpResponse;
-  if (data.error) throw new Error(`Scale SERP error: ${data.error}`);
-
-  return data.amazon_results ?? [];
+  const data = (await resp.json()) as OpenLibraryResponse;
+  return data.docs ?? [];
 }
 
 export async function searchAmazonBooksForCompetitors(
   book: Book,
   tags?: string[]
 ): Promise<AmazonBookSuggestion[]> {
-  const searchTags = tags && tags.length > 0
+  const queries = tags && tags.length > 0
     ? tags
     : [
         `${book.deepNiche || book.subNiche} ${book.niche}`,
@@ -64,40 +62,44 @@ export async function searchAmazonBooksForCompetitors(
   const seen = new Set<string>();
   const results: AmazonBookSuggestion[] = [];
 
-  for (const tag of searchTags) {
+  for (const query of queries) {
     if (results.length >= 12) break;
 
-    let items: ScaleSerpAmazonResult[];
+    let docs: OpenLibraryDoc[];
     try {
-      items = await searchAmazonByTag(tag);
+      docs = await searchOpenLibrary(query);
     } catch (err) {
-      console.error(`Scale SERP search error for tag "${tag}":`, err);
+      console.error(`Open Library search error for tag "${query}":`, err);
       continue;
     }
 
-    for (const item of items) {
+    for (const doc of docs) {
       if (results.length >= 12) break;
-      if (!item.title) continue;
+      if (!doc.title) continue;
 
-      const key = item.title.toLowerCase().slice(0, 40);
+      const key = doc.title.toLowerCase().slice(0, 40);
       if (seen.has(key)) continue;
       seen.add(key);
 
-      const author = item.authors?.map((a) => a.name).slice(0, 2).join(", ") ?? "Unknown Author";
+      const author = (doc.author_name ?? []).slice(0, 2).join(", ") || "Unknown Author";
+      const coverImage = doc.cover_i
+        ? `${COVER_BASE}/${doc.cover_i}-M.jpg`
+        : undefined;
+
       const reasonParts: string[] = [];
-      if (item.rating) reasonParts.push(`★ ${item.rating}`);
-      if (item.ratings_total) reasonParts.push(`${item.ratings_total.toLocaleString()} ratings`);
-      reasonParts.push(`"${tag}"`);
+      if (doc.ratings_average) reasonParts.push(`★ ${doc.ratings_average.toFixed(1)}`);
+      if (doc.ratings_count) reasonParts.push(`${doc.ratings_count.toLocaleString()} ratings`);
+      if (doc.first_publish_year) reasonParts.push(`${doc.first_publish_year}`);
+      reasonParts.push(`"${query}"`);
 
       results.push({
-        title: item.title,
+        title: doc.title,
         author,
         reason: reasonParts.join(" · "),
-        rating: item.rating,
-        reviewCount: item.ratings_total,
-        asin: item.asin,
-        amazonUrl: item.link ?? (item.asin ? `https://www.amazon.com/dp/${item.asin}` : undefined),
-        image: item.image,
+        rating: doc.ratings_average ? parseFloat(doc.ratings_average.toFixed(1)) : undefined,
+        reviewCount: doc.ratings_count,
+        amazonUrl: buildAmazonSearchUrl(doc.title, doc.author_name?.[0]),
+        image: coverImage,
       });
     }
   }
