@@ -216,6 +216,9 @@ export default function Write() {
           </div>
         )}
 
+        {book?.title && (
+          <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">{book.title}</p>
+        )}
         <BookStepNav bookId={bookId} current="write" bookStatus={book?.status} />
       </aside>
 

@@ -143,6 +143,9 @@ export default function Blueprint() {
     <div className="flex h-full">
       {/* Sidebar */}
       <aside className="w-52 flex-shrink-0 border-r border-border bg-muted/30 p-5 flex flex-col gap-6">
+        {book?.title && (
+          <p className="text-xs font-semibold text-foreground leading-tight line-clamp-2">{book.title}</p>
+        )}
         <BookStepNav bookId={bookId} current="blueprint" bookStatus={book?.status} />
       </aside>
 
