@@ -292,25 +292,6 @@ export default function Resources() {
   return (
     <div className="flex h-full">
       <aside className="w-52 flex-shrink-0 border-r border-border bg-muted/30 p-5 flex flex-col gap-6">
-        {book && (
-          <div className="space-y-1.5">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Book Info</h2>
-            <div className="space-y-1 text-sm">
-              {[
-                ["Niche", book.niche],
-                ["Sub-Niche", book.subNiche],
-                ["Deep Niche", book.deepNiche],
-                ["Audience", book.audience],
-                ["Tone", book.tone],
-              ].map(([label, val]) => (
-                <div key={label}>
-                  <span className="text-muted-foreground text-xs">{label}</span>
-                  <p className="font-medium capitalize text-foreground text-xs">{val}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
         <BookStepNav bookId={bookId} current="resources" bookStatus={book?.status} />
       </aside>
 
