@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Number Book Studio"
+version = "1.0.0"
+id = "artifacts/number-book-studio-view"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 25351
+
+[services.development]
+run = "pnpm --filter @workspace/number-book-studio-view run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/number-book-studio-view", "run", "build" ]
+publicDir = "artifacts/number-book-studio-view/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "25351"
+BASE_PATH = "/"
