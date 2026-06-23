@@ -1,8 +1,42 @@
 import { Router, type IRouter } from "express";
-import { cerebras } from "../lib/cerebras";
-import { CEREBRAS_MODEL } from "../lib/cerebras";
+import { cerebras, CEREBRAS_MODEL } from "../lib/cerebras";
 
 const router: IRouter = Router();
+
+function extractSuggestions(raw: string): string[] {
+  const trimmed = raw.trim();
+
+  // 1. Try JSON array directly or wrapped in code block
+  const arrayMatch = trimmed.match(/\[[\s\S]*?\]/);
+  if (arrayMatch) {
+    try {
+      const parsed = JSON.parse(arrayMatch[0]);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.map(String).filter(Boolean).slice(0, 5);
+      }
+    } catch { /* fall through */ }
+  }
+
+  // 2. Parse numbered list: "1. Foo", "2. Bar"
+  const numberedLines = trimmed
+    .split("\n")
+    .map(l => l.replace(/^\s*\d+[\.\)]\s*/, "").trim())
+    .filter(l => l.length > 3 && l.length < 100 && !l.startsWith("[") && !l.startsWith("{"));
+  if (numberedLines.length >= 3) {
+    return numberedLines.slice(0, 5);
+  }
+
+  // 3. Parse bullet list: "- Foo", "• Bar"
+  const bulletLines = trimmed
+    .split("\n")
+    .map(l => l.replace(/^\s*[-•*]\s*/, "").trim())
+    .filter(l => l.length > 3 && l.length < 100);
+  if (bulletLines.length >= 3) {
+    return bulletLines.slice(0, 5);
+  }
+
+  return [];
+}
 
 router.post("/niches/suggest-deep", async (req, res): Promise<void> => {
   const { niche, subNiche } = req.body ?? {};
@@ -12,46 +46,33 @@ router.post("/niches/suggest-deep", async (req, res): Promise<void> => {
     return;
   }
 
-  const prompt = `You are a KDP (Kindle Direct Publishing) non-fiction book niche expert.
+  const prompt = `You are a KDP book niche expert. Given niche "${niche}" and sub-niche "${subNiche}", list exactly 5 specific deep niche angles for a profitable non-fiction book. Each should be 3-8 words, more specific than the sub-niche, targeting a clear audience or situation.
 
-Given:
-- Niche: "${niche}"
-- Sub-Niche: "${subNiche}"
-
-Generate exactly 5 specific deep niche angles for a profitable non-fiction book. Each deep niche should:
-- Be more specific than the sub-niche
-- Target a clear audience segment or situation
-- Be a realistic, commercially viable book topic on Amazon KDP
-- Be concise (3-8 words)
-
-Return ONLY a valid JSON array of 5 strings. No explanation, no markdown, no extra text.
-
-Example format: ["Intermittent Fasting for Women Over 50","7-Day Beginner Keto Meal Plan","Anti-Inflammatory Diet for Arthritis","Low-Carb Recipes for Busy Moms","Mediterranean Diet for Heart Health"]`;
+Respond with ONLY a numbered list, nothing else:
+1. 
+2. 
+3. 
+4. 
+5. `;
 
   try {
     const response = await cerebras.chat.completions.create({
       model: CEREBRAS_MODEL,
       messages: [{ role: "user", content: prompt }],
-      temperature: 0.8,
-      max_tokens: 300,
+      temperature: 0.85,
+      max_tokens: 250,
     });
 
-    const raw = (response.choices[0]?.message?.content ?? "").trim();
+    const raw = response.choices[0]?.message?.content ?? "";
+    const suggestions = extractSuggestions(raw);
 
-    const match = raw.match(/\[[\s\S]*\]/);
-    if (!match) {
-      res.status(500).json({ error: "AI returned unexpected format" });
+    if (suggestions.length === 0) {
+      console.error("Unparseable AI output:", JSON.stringify(raw.slice(0, 200)));
+      res.status(500).json({ error: "AI returned unexpected format — try again" });
       return;
     }
 
-    const suggestions: string[] = JSON.parse(match[0]);
-
-    if (!Array.isArray(suggestions) || suggestions.length === 0) {
-      res.status(500).json({ error: "AI returned empty suggestions" });
-      return;
-    }
-
-    res.json({ suggestions: suggestions.slice(0, 5) });
+    res.json({ suggestions });
   } catch (err) {
     const message = (err as { message?: string }).message ?? "Unknown error";
     res.status(500).json({ error: `AI suggestion failed: ${message}` });
