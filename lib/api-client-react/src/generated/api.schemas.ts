@@ -251,6 +251,15 @@ export interface QualityIssue {
   description: string;
 }
 
+export interface DeepNicheSuggestRequest {
+  niche: string;
+  subNiche: string;
+}
+
+export interface DeepNicheSuggestResponse {
+  suggestions: string[];
+}
+
 export interface QualityReport {
   bookId: number;
   totalEntries: number;

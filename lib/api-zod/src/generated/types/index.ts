@@ -19,6 +19,8 @@ export * from './bookTone';
 export * from './bookUpdate';
 export * from './competitorSuggestion';
 export * from './competitorSuggestionsResponse';
+export * from './deepNicheSuggestRequest';
+export * from './deepNicheSuggestResponse';
 export * from './entry';
 export * from './entryStatus';
 export * from './entryUpdate';

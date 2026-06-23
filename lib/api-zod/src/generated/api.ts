@@ -200,6 +200,19 @@ export const GenerateResourcesResponse = zod.object({
 
 
 /**
+ * @summary Suggest deep niche ideas based on niche and sub-niche
+ */
+export const SuggestDeepNicheBody = zod.object({
+  "niche": zod.string(),
+  "subNiche": zod.string()
+})
+
+export const SuggestDeepNicheResponse = zod.object({
+  "suggestions": zod.array(zod.string())
+})
+
+
+/**
  * @summary Get AI-suggested competitor books for this niche
  */
 export const SuggestCompetitorsParams = zod.object({

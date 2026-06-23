@@ -26,6 +26,8 @@ import type {
   BookStats,
   BookUpdate,
   CompetitorSuggestionsResponse,
+  DeepNicheSuggestRequest,
+  DeepNicheSuggestResponse,
   Entry,
   EntryUpdate,
   ExportRequest,
@@ -631,6 +633,77 @@ export const useGenerateResources = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getGenerateResourcesMutationOptions(options));
+    }
+
+export const getSuggestDeepNicheUrl = () => {
+
+
+
+
+  return `/api/niches/suggest-deep`
+}
+
+/**
+ * @summary Suggest deep niche ideas based on niche and sub-niche
+ */
+export const suggestDeepNiche = async (deepNicheSuggestRequest: DeepNicheSuggestRequest, options?: RequestInit): Promise<DeepNicheSuggestResponse> => {
+
+  return customFetch<DeepNicheSuggestResponse>(getSuggestDeepNicheUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      deepNicheSuggestRequest,)
+  }
+);}
+
+
+
+
+export const getSuggestDeepNicheMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suggestDeepNiche>>, TError,{data: BodyType<DeepNicheSuggestRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof suggestDeepNiche>>, TError,{data: BodyType<DeepNicheSuggestRequest>}, TContext> => {
+
+const mutationKey = ['suggestDeepNiche'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof suggestDeepNiche>>, {data: BodyType<DeepNicheSuggestRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  suggestDeepNiche(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SuggestDeepNicheMutationResult = NonNullable<Awaited<ReturnType<typeof suggestDeepNiche>>>
+    export type SuggestDeepNicheMutationBody = BodyType<DeepNicheSuggestRequest>
+    export type SuggestDeepNicheMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Suggest deep niche ideas based on niche and sub-niche
+ */
+export const useSuggestDeepNiche = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof suggestDeepNiche>>, TError,{data: BodyType<DeepNicheSuggestRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof suggestDeepNiche>>,
+        TError,
+        {data: BodyType<DeepNicheSuggestRequest>},
+        TContext
+      > => {
+      return useMutation(getSuggestDeepNicheMutationOptions(options));
     }
 
 export const getSuggestCompetitorsUrl = (id: number,) => {

@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, BookOpen, Plus, X, ChevronDown, Check } from "lucide-react";
+import { useSuggestDeepNiche } from "@workspace/api-client-react";
+import { ArrowRight, BookOpen, Plus, X, ChevronDown, Check, Sparkles, Loader2 } from "lucide-react";
 
 // ─── Niche data ────────────────────────────────────────────────────────────────
 
@@ -243,6 +244,9 @@ export default function NewBook() {
   const [nicheOptions, setNicheOptions] = useState<string[]>(NICHE_KEYS);
   const [subNicheOptions, setSubNicheOptions] = useState<string[]>([]);
   const [deepNicheOptions, setDeepNicheOptions] = useState<string[]>([]);
+  const [deepNicheError, setDeepNicheError] = useState<string | null>(null);
+
+  const suggestDeepNiche = useSuggestDeepNiche();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -272,6 +276,30 @@ export default function NewBook() {
     formOnChange(sub);
     form.setValue("deepNiche", "");
     setDeepNicheOptions([]);
+    setDeepNicheError(null);
+  };
+
+  const handleSuggestDeepNiche = () => {
+    const niche = form.getValues("niche");
+    const subNiche = form.getValues("subNiche");
+    if (!niche || !subNiche) return;
+    setDeepNicheError(null);
+    suggestDeepNiche.mutate(
+      { data: { niche, subNiche } },
+      {
+        onSuccess: (data) => {
+          const incoming = data.suggestions ?? [];
+          setDeepNicheOptions((prev) => {
+            const existing = new Set(prev);
+            const fresh = incoming.filter((s) => !existing.has(s));
+            return [...prev, ...fresh];
+          });
+        },
+        onError: () => {
+          setDeepNicheError("AI suggestion failed — add your own below");
+        },
+      }
+    );
   };
 
   const onSubmit = (values: FormValues) => {
@@ -365,9 +393,25 @@ export default function NewBook() {
                 name="deepNiche"
                 render={({ field }) => (
                   <FormItem>
-                    <div className="flex items-center gap-2">
-                      <FormLabel>Deep Niche</FormLabel>
-                      <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-medium">Optional</span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FormLabel>Deep Niche</FormLabel>
+                        <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded font-medium">Optional</span>
+                      </div>
+                      {selectedSubNiche && (
+                        <button
+                          type="button"
+                          onClick={handleSuggestDeepNiche}
+                          disabled={suggestDeepNiche.isPending}
+                          className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+                        >
+                          {suggestDeepNiche.isPending ? (
+                            <><Loader2 className="w-3 h-3 animate-spin" /> Thinking…</>
+                          ) : (
+                            <><Sparkles className="w-3 h-3" /> Suggest with AI</>
+                          )}
+                        </button>
+                      )}
                     </div>
                     <FormControl>
                       <NicheSelect
@@ -375,11 +419,14 @@ export default function NewBook() {
                         onValueChange={field.onChange}
                         options={deepNicheOptions}
                         onOptionsChange={setDeepNicheOptions}
-                        placeholder={selectedSubNiche ? "Add a deep niche…" : "Select a sub-niche first"}
+                        placeholder={selectedSubNiche ? "Select or add a deep niche…" : "Select a sub-niche first"}
                         disabled={!selectedSubNiche}
                         optional
                       />
                     </FormControl>
+                    {deepNicheError && (
+                      <p className="text-[11px] text-destructive mt-1">{deepNicheError}</p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

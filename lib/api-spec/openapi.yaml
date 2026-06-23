@@ -163,6 +163,25 @@ paths:
               schema:
                 $ref: "#/components/schemas/Book"
 
+  /niches/suggest-deep:
+    post:
+      operationId: suggestDeepNiche
+      tags: [books]
+      summary: Suggest deep niche ideas based on niche and sub-niche
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeepNicheSuggestRequest"
+      responses:
+        "200":
+          description: Deep niche suggestions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeepNicheSuggestResponse"
+
   /books/{id}/competitors/suggest:
     post:
       operationId: suggestCompetitors
@@ -703,6 +722,24 @@ components:
           enum: [warning, error]
         description:
           type: string
+
+    DeepNicheSuggestRequest:
+      type: object
+      required: [niche, subNiche]
+      properties:
+        niche:
+          type: string
+        subNiche:
+          type: string
+
+    DeepNicheSuggestResponse:
+      type: object
+      required: [suggestions]
+      properties:
+        suggestions:
+          type: array
+          items:
+            type: string
 
     QualityReport:
       type: object

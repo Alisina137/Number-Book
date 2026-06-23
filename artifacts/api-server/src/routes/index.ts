@@ -6,6 +6,7 @@ import qualityRouter from "./quality";
 import analysisRouter from "./analysis";
 import resourcesRouter from "./resources";
 import competitorsRouter from "./competitors";
+import nichesRouter from "./niches";
 
 const router: IRouter = Router();
 
@@ -16,5 +17,6 @@ router.use(qualityRouter);
 router.use(analysisRouter);
 router.use(resourcesRouter);
 router.use(competitorsRouter);
+router.use(nichesRouter);
 
 export default router;
