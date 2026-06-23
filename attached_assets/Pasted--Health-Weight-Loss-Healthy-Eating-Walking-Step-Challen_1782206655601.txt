@@ -1,0 +1,131 @@
+{
+  "Health": [
+    "Weight Loss",
+    "Healthy Eating",
+    "Walking & Step Challenges",
+    "Sleep Improvement",
+    "Gut Health",
+    "Healthy Aging",
+    "Men's Health",
+    "Women's Health",
+    "Diabetes-Friendly Living",
+    "Heart Health"
+  ],
+
+  "Productivity & Goal Achievement": [
+    "Time Management",
+    "Daily Planning",
+    "Task Prioritization",
+    "Focus & Concentration",
+    "Anti-Procrastination",
+    "Goal Setting",
+    "Deep Work",
+    "Habit Building",
+    "Productivity for Students",
+    "Productivity for Entrepreneurs"
+  ],
+
+  "Small Business & Side Hustles": [
+    "Affiliate Marketing",
+    "Etsy Business",
+    "Print-on-Demand",
+    "Freelancing",
+    "Blogging",
+    "YouTube Business",
+    "Digital Products",
+    "Consulting",
+    "AI Side Hustles",
+    "Local Service Businesses"
+  ],
+
+  "Finance": [
+    "Budgeting",
+    "Saving Money",
+    "Debt Reduction",
+    "Investing Basics",
+    "Personal Finance",
+    "Financial Independence",
+    "Passive Income",
+    "Retirement Planning",
+    "Money Mindset",
+    "Wealth Building"
+  ],
+
+  "Mindset & Self Discovery": [
+    "Confidence",
+    "Self-Esteem",
+    "Emotional Intelligence",
+    "Self-Awareness",
+    "Resilience",
+    "Personal Growth",
+    "Purpose Finding",
+    "Decision Making",
+    "Critical Thinking",
+    "Overcoming Fear"
+  ],
+
+  "Wellness": [
+    "Stress Management",
+    "Work-Life Balance",
+    "Mindfulness",
+    "Digital Detox",
+    "Self-Care",
+    "Burnout Recovery",
+    "Relaxation Techniques",
+    "Happiness Habits",
+    "Energy Management",
+    "Life Simplification"
+  ],
+
+  "Story": [
+    "Bedtime Stories",
+    "Inspirational Stories",
+    "Moral Stories",
+    "Short Adventure Stories",
+    "Historical Stories",
+    "Survival Stories",
+    "Animal Stories",
+    "Mystery Stories",
+    "Motivational Stories",
+    "True-Life Stories"
+  ],
+
+  "Facts": [
+    "Science Facts",
+    "Psychology Facts",
+    "History Facts",
+    "Space Facts",
+    "Animal Facts",
+    "Human Body Facts",
+    "Technology Facts",
+    "Geography Facts",
+    "Sports Facts",
+    "Military Facts"
+  ],
+
+  "Trivia": [
+    "General Knowledge Trivia",
+    "History Trivia",
+    "Sports Trivia",
+    "Football Trivia",
+    "Movie Trivia",
+    "Music Trivia",
+    "Geography Trivia",
+    "Science Trivia",
+    "Bible Trivia",
+    "Kids Trivia"
+  ],
+
+  "Relationships": [
+    "Marriage",
+    "Dating",
+    "Communication Skills",
+    "Parenting",
+    "Friendship",
+    "Conflict Resolution",
+    "Love Languages",
+    "Long Distance Relationships",
+    "Family Relationships",
+    "Relationship Habits"
+  ]
+}
