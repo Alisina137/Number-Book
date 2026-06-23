@@ -307,7 +307,7 @@ export default function NewBook() {
       { data: { ...values, deepNiche: values.deepNiche ?? "" } },
       {
         onSuccess: (book) => {
-          setLocation(`/books/${book.id}/analysis`);
+          setLocation(`/books/${book.id}/info`);
         },
         onError: () => {
           toast({ title: "Failed to create book", variant: "destructive" });
