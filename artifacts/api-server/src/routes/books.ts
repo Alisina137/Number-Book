@@ -23,9 +23,8 @@ import {
   HeadingLevel,
   AlignmentType,
   PageBreak,
-  UnderlineType,
 } from "docx";
-import PDFDocument from "pdfkit";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 const router: IRouter = Router();
 
@@ -322,8 +321,43 @@ async function buildDocxBase64(
   return { base64: buffer.toString("base64"), wordCount };
 }
 
-// Helper: generate PDF as base64
-function buildPdfBase64(
+// Helper: replace characters outside WinAnsi (Latin-1 supplement) with ASCII equivalents
+function sanitizeForPdf(text: string): string {
+  return text
+    .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015]/g, "-")   // various hyphens/dashes → -
+    .replace(/[\u2018\u2019]/g, "'")                             // smart single quotes → '
+    .replace(/[\u201C\u201D]/g, '"')                             // smart double quotes → "
+    .replace(/\u2026/g, "...")                                   // ellipsis → ...
+    .replace(/\u00A0/g, " ")                                     // non-breaking space → space
+    .replace(/\u2022/g, "*")                                     // bullet → *
+    .replace(/[^\x00-\xFF]/g, "?");                              // any remaining non-Latin-1 → ?
+}
+
+// Helper: wrap text into lines fitting maxWidth
+function wrapText(text: string, font: Awaited<ReturnType<InstanceType<typeof PDFDocument>["embedFont"]>>, fontSize: number, maxWidth: number): string[] {
+  const paragraphs = text.split(/\n+/);
+  const lines: string[] = [];
+  for (const para of paragraphs) {
+    if (!para.trim()) { lines.push(""); continue; }
+    const words = para.split(" ");
+    let current = "";
+    for (const word of words) {
+      const test = current ? `${current} ${word}` : word;
+      if (font.widthOfTextAtSize(test, fontSize) > maxWidth && current) {
+        lines.push(current);
+        current = word;
+      } else {
+        current = test;
+      }
+    }
+    if (current) lines.push(current);
+    lines.push("");
+  }
+  return lines;
+}
+
+// Helper: generate PDF as base64 using pdf-lib
+async function buildPdfBase64(
   bookTitle: string,
   author: string,
   deepNiche: string,
@@ -331,61 +365,110 @@ function buildPdfBase64(
   entries: { title: string; content?: string | null; wordCount?: number | null }[],
   includeConclusion: boolean
 ): Promise<{ base64: string; wordCount: number }> {
-  return new Promise((resolve, reject) => {
-    const doc = new PDFDocument({ margin: 72, size: "A4", bufferPages: true });
-    const chunks: Buffer[] = [];
-    let wordCount = 0;
+  let wordCount = 0;
 
-    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
-    doc.on("error", reject);
-    doc.on("end", () => {
-      const buffer = Buffer.concat(chunks);
-      resolve({ base64: buffer.toString("base64"), wordCount });
+  const pdfDoc = await PDFDocument.create();
+  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+  const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const italicFont = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+
+  const pageW = 595.28;  // A4
+  const pageH = 841.89;
+  const margin = 72;
+  const textW = pageW - margin * 2;
+  const darkColor = rgb(0.1, 0.1, 0.17);
+  const grayColor = rgb(0.33, 0.33, 0.33);
+  const lightGray = rgb(0.53, 0.53, 0.53);
+
+  const addPage = () => {
+    const p = pdfDoc.addPage([pageW, pageH]);
+    return { page: p, y: pageH - margin };
+  };
+
+  const s = sanitizeForPdf;
+
+  // ── Title page ──
+  {
+    const { page } = addPage();
+    page.drawText(s(bookTitle), {
+      x: margin, y: pageH / 2 + 60,
+      size: 26, font: boldFont, color: darkColor,
+      maxWidth: textW, lineHeight: 34,
     });
-
-    // Title page
-    doc.moveDown(4);
-    doc.fontSize(28).font("Helvetica-Bold").fillColor("#1a1a2e").text(bookTitle, { align: "center" });
-    doc.moveDown(1);
-    doc.fontSize(14).font("Helvetica-Oblique").fillColor("#555555").text(`By ${author}`, { align: "center" });
-    doc.moveDown(0.5);
-    doc.fontSize(11).font("Helvetica").fillColor("#888888").text(`A collection of ${numEntries} ${deepNiche} entries`, { align: "center" });
-
-    // Table of contents
-    doc.addPage();
-    doc.fontSize(20).font("Helvetica-Bold").fillColor("#1a1a2e").text("Table of Contents");
-    doc.moveDown(0.8);
-    entries.forEach((e, i) => {
-      doc.fontSize(11).font("Helvetica").fillColor("#222222").text(`${i + 1}.  ${e.title}`, { lineGap: 4 });
+    page.drawText(s(`By ${author}`), {
+      x: margin, y: pageH / 2,
+      size: 14, font: italicFont, color: grayColor,
     });
-
-    // Entries
-    entries.forEach((e, i) => {
-      doc.addPage();
-      doc.fontSize(18).font("Helvetica-Bold").fillColor("#1a1a2e").text(`${i + 1}. ${e.title}`);
-      doc.moveDown(0.6);
-      const body = e.content ?? "Content not generated.";
-      doc.fontSize(11).font("Helvetica").fillColor("#222222").text(body, { align: "justify", lineGap: 3 });
-      wordCount += e.wordCount ?? 0;
+    page.drawText(s(`A collection of ${numEntries} ${deepNiche} entries`), {
+      x: margin, y: pageH / 2 - 30,
+      size: 11, font: regularFont, color: lightGray,
     });
+  }
 
-    if (includeConclusion) {
-      doc.addPage();
-      doc.fontSize(18).font("Helvetica-Bold").fillColor("#1a1a2e").text("Conclusion");
-      doc.moveDown(0.6);
-      doc.fontSize(11).font("Helvetica").fillColor("#222222").text(
-        "Thank you for reading this collection. We hope it has been informative, inspiring, and valuable to you.",
-        { align: "justify", lineGap: 3 }
-      );
+  // ── Table of Contents ──
+  {
+    let { page, y } = addPage();
+    page.drawText("Table of Contents", { x: margin, y, size: 18, font: boldFont, color: darkColor });
+    y -= 36;
+    for (let i = 0; i < entries.length; i++) {
+      const label = s(`${i + 1}.  ${entries[i].title}`);
+      const lines = wrapText(label, regularFont, 11, textW - 20);
+      for (const line of lines) {
+        if (!line) { y -= 4; continue; }
+        if (y < margin + 20) { ({ page, y } = addPage()); }
+        page.drawText(line, { x: margin, y, size: 11, font: regularFont, color: darkColor });
+        y -= 16;
+      }
     }
+  }
 
-    doc.addPage();
-    doc.fontSize(18).font("Helvetica-Bold").fillColor("#1a1a2e").text("About the Author");
-    doc.moveDown(0.6);
-    doc.fontSize(11).font("Helvetica").fillColor("#222222").text(author);
+  // ── Entries ──
+  for (let i = 0; i < entries.length; i++) {
+    const e = entries[i];
+    let { page, y } = addPage();
 
-    doc.end();
-  });
+    // Entry heading
+    const headLines = wrapText(s(`${i + 1}. ${e.title}`), boldFont, 16, textW);
+    for (const line of headLines) {
+      if (!line) { y -= 6; continue; }
+      page.drawText(line, { x: margin, y, size: 16, font: boldFont, color: darkColor });
+      y -= 24;
+    }
+    y -= 8;
+
+    // Entry body
+    const bodyLines = wrapText(s(e.content ?? "Content not generated."), regularFont, 11, textW);
+    for (const line of bodyLines) {
+      if (y < margin + 20) { ({ page, y } = addPage()); }
+      if (!line) { y -= 6; continue; }
+      page.drawText(line, { x: margin, y, size: 11, font: regularFont, color: darkColor });
+      y -= 16;
+    }
+    wordCount += e.wordCount ?? 0;
+  }
+
+  // ── Conclusion ──
+  if (includeConclusion) {
+    let { page, y } = addPage();
+    page.drawText("Conclusion", { x: margin, y, size: 18, font: boldFont, color: darkColor });
+    y -= 36;
+    const lines = wrapText("Thank you for reading this collection. We hope it has been informative, inspiring, and valuable to you.", regularFont, 11, textW);
+    for (const line of lines) {
+      if (!line) { y -= 6; continue; }
+      page.drawText(line, { x: margin, y, size: 11, font: regularFont, color: darkColor });
+      y -= 16;
+    }
+  }
+
+  // ── About the Author ──
+  {
+    const { page, y } = addPage();
+    page.drawText("About the Author", { x: margin, y, size: 18, font: boldFont, color: darkColor });
+    page.drawText(s(author), { x: margin, y: y - 36, size: 11, font: regularFont, color: darkColor });
+  }
+
+  const pdfBytes = await pdfDoc.save();
+  return { base64: Buffer.from(pdfBytes).toString("base64"), wordCount };
 }
 
 // Export book
