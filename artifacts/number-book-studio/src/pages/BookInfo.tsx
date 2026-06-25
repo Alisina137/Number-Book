@@ -205,6 +205,38 @@ export default function BookInfo() {
                 />
               </div>
 
+              <div className="bg-card border border-card-border rounded-xl p-5 space-y-4">
+                <h2 className="font-medium text-sm text-foreground">Book Details (optional)</h2>
+
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Book Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. 100 Amazing Ocean Facts" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="authorName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Author Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Jane Smith" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <div className="bg-card border border-card-border rounded-xl p-5 grid grid-cols-2 gap-4">
                 <h2 className="col-span-2 font-medium text-sm text-foreground">Audience & Tone</h2>
 
@@ -316,38 +348,6 @@ export default function BookInfo() {
                     )}
                   />
                 </div>
-              </div>
-
-              <div className="bg-card border border-card-border rounded-xl p-5 space-y-4">
-                <h2 className="font-medium text-sm text-foreground">Book Details (optional)</h2>
-
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Book Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. 100 Amazing Ocean Facts" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="authorName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Author Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Jane Smith" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
 
               <div className="flex gap-3">
