@@ -34,10 +34,12 @@ function buildAmazonSearchUrl(title: string, author?: string): string {
   return `https://www.amazon.com/s?k=${encodeURIComponent(q)}&i=stripbooks`;
 }
 
+const TARGET_RESULTS = 24;
+
 async function searchOpenLibrary(query: string): Promise<OpenLibraryDoc[]> {
   const params = new URLSearchParams({
     q: query,
-    limit: "20",
+    limit: "50",
     fields: "title,author_name,cover_i,first_publish_year,ratings_average,ratings_count,isbn",
   });
 
@@ -52,57 +54,68 @@ export async function searchAmazonBooksForCompetitors(
   book: Book,
   tags?: string[]
 ): Promise<AmazonBookSuggestion[]> {
+  // Build query list — if tags supplied use them, otherwise generate multiple from book fields
   const queries = tags && tags.length > 0
     ? tags
     : [
         `${book.deepNiche || book.subNiche} ${book.niche}`,
         `${book.subNiche} ${book.niche} guide`,
+        `best ${book.subNiche} book`,
+        `${book.niche} beginners guide`,
       ];
 
   const seen = new Set<string>();
   const results: AmazonBookSuggestion[] = [];
 
-  for (const query of queries) {
-    if (results.length >= 12) break;
+  // Run queries in parallel (3 at a time) to fill the pool faster
+  const batches: string[][] = [];
+  for (let i = 0; i < queries.length; i += 3) batches.push(queries.slice(i, i + 3));
 
-    let docs: OpenLibraryDoc[];
-    try {
-      docs = await searchOpenLibrary(query);
-    } catch (err) {
-      console.error(`Open Library search error for tag "${query}":`, err);
-      continue;
-    }
+  for (const batch of batches) {
+    if (results.length >= TARGET_RESULTS) break;
 
-    for (const doc of docs) {
-      if (results.length >= 12) break;
-      if (!doc.title) continue;
+    const settled = await Promise.allSettled(
+      batch.map((q) => searchOpenLibrary(q).then((docs) => ({ q, docs })))
+    );
 
-      const key = doc.title.toLowerCase().slice(0, 40);
-      if (seen.has(key)) continue;
-      seen.add(key);
+    for (const result of settled) {
+      if (result.status === "rejected") {
+        console.error("Open Library search error:", result.reason);
+        continue;
+      }
+      const { q, docs } = result.value;
 
-      const author = (doc.author_name ?? []).slice(0, 2).join(", ") || "Unknown Author";
-      const coverImage = doc.cover_i
-        ? `${COVER_BASE}/${doc.cover_i}-M.jpg`
-        : undefined;
+      for (const doc of docs) {
+        if (results.length >= TARGET_RESULTS) break;
+        if (!doc.title) continue;
 
-      const reasonParts: string[] = [];
-      if (doc.ratings_average) reasonParts.push(`★ ${doc.ratings_average.toFixed(1)}`);
-      if (doc.ratings_count) reasonParts.push(`${doc.ratings_count.toLocaleString()} ratings`);
-      if (doc.first_publish_year) reasonParts.push(`${doc.first_publish_year}`);
-      reasonParts.push(`"${query}"`);
+        const key = doc.title.toLowerCase().slice(0, 40);
+        if (seen.has(key)) continue;
+        seen.add(key);
 
-      results.push({
-        title: doc.title,
-        author,
-        reason: reasonParts.join(" · "),
-        rating: doc.ratings_average ? parseFloat(doc.ratings_average.toFixed(1)) : undefined,
-        reviewCount: doc.ratings_count,
-        amazonUrl: buildAmazonSearchUrl(doc.title, doc.author_name?.[0]),
-        image: coverImage,
-      });
+        const author = (doc.author_name ?? []).slice(0, 2).join(", ") || "Unknown Author";
+        const coverImage = doc.cover_i
+          ? `${COVER_BASE}/${doc.cover_i}-M.jpg`
+          : undefined;
+
+        const reasonParts: string[] = [];
+        if (doc.ratings_average) reasonParts.push(`★ ${doc.ratings_average.toFixed(1)}`);
+        if (doc.ratings_count) reasonParts.push(`${doc.ratings_count.toLocaleString()} ratings`);
+        if (doc.first_publish_year) reasonParts.push(`${doc.first_publish_year}`);
+        reasonParts.push(`"${q}"`);
+
+        results.push({
+          title: doc.title,
+          author,
+          reason: reasonParts.join(" · "),
+          rating: doc.ratings_average ? parseFloat(doc.ratings_average.toFixed(1)) : undefined,
+          reviewCount: doc.ratings_count,
+          amazonUrl: buildAmazonSearchUrl(doc.title, doc.author_name?.[0]),
+          image: coverImage,
+        });
+      }
     }
   }
 
-  return results.slice(0, 12);
+  return results.slice(0, TARGET_RESULTS);
 }

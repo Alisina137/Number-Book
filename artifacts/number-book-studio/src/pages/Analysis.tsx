@@ -166,6 +166,30 @@ function ScoreBar({ label, value, accent = false }: { label: string; value: numb
   );
 }
 
+// ─── Pending Competitor Card (optimistic UI while AI analyses) ────────────────
+
+function PendingCompetitorCard({ title, author, image }: { title: string; author?: string; image?: string }) {
+  return (
+    <div className="bg-card border border-card-border rounded-xl p-4 flex items-start gap-3">
+      {image ? (
+        <img src={image} alt={title} className="w-10 h-14 object-cover rounded flex-shrink-0 shadow-sm" />
+      ) : (
+        <div className="w-10 h-14 bg-muted rounded flex-shrink-0 flex items-center justify-center">
+          <BookOpen className="w-4 h-4 text-muted-foreground" />
+        </div>
+      )}
+      <div className="flex-1 min-w-0">
+        <p className="font-semibold text-sm text-foreground truncate">{title}</p>
+        {author && <p className="text-xs text-muted-foreground mt-0.5">{author}</p>}
+        <div className="flex items-center gap-1.5 mt-3">
+          <Loader2 className="w-3 h-3 animate-spin text-primary" />
+          <span className="text-xs text-muted-foreground">Analysing with AI…</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Competitor Card ───────────────────────────────────────────────────────────
 
 function CompetitorCard({ competitor, onRemove, isRemoving }: { competitor: CompetitorBook; onRemove: () => void; isRemoving: boolean }) {
@@ -479,6 +503,7 @@ function CompetitorSection({ bookId, book, competitorData, onUpdate }: {
   const [manualError, setManualError] = useState<string | null>(null);
   const [tags, setTags] = useState<string[]>(() => book ? buildDefaultTags(book) : []);
   const [tagInput, setTagInput] = useState("");
+  const [pendingCompetitors, setPendingCompetitors] = useState<Array<{ id: string; title: string; author?: string; image?: string }>>([]);
 
   const suggestMutation = useSuggestCompetitors();
   const addMutation = useAddCompetitor();
@@ -516,17 +541,20 @@ function CompetitorSection({ bookId, book, competitorData, onUpdate }: {
     title: string,
     author?: string,
     addedVia: "suggested" | "manual" = "suggested",
-    extra?: { asin?: string; amazonUrl?: string; rating?: number; reviewCount?: number }
+    extra?: { asin?: string; amazonUrl?: string; rating?: number; reviewCount?: number; image?: string }
   ) => {
-    const tempId = title;
-    setAddingIds((prev) => new Set(prev).add(tempId));
+    const tempId = `pending-${Date.now()}-${title}`;
+    // Optimistic: show in pool immediately with analysing spinner
+    setPendingCompetitors((prev) => [...prev, { id: tempId, title, author, image: extra?.image }]);
+    setAddingIds((prev) => new Set(prev).add(title));
     setManualError(null);
     addMutation.mutate(
       { id: bookId, data: { title, author: author ?? undefined, addedVia, ...extra } },
       {
         onSuccess: () => {
           onUpdate();
-          setAddingIds((prev) => { const s = new Set(prev); s.delete(tempId); return s; });
+          setPendingCompetitors((prev) => prev.filter((p) => p.id !== tempId));
+          setAddingIds((prev) => { const s = new Set(prev); s.delete(title); return s; });
           if (addedVia === "manual") {
             setManualTitle("");
             setManualAuthor("");
@@ -536,7 +564,8 @@ function CompetitorSection({ bookId, book, competitorData, onUpdate }: {
         onError: (err: unknown) => {
           const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error ?? "Failed to add competitor";
           if (addedVia === "manual") setManualError(msg);
-          setAddingIds((prev) => { const s = new Set(prev); s.delete(tempId); return s; });
+          setPendingCompetitors((prev) => prev.filter((p) => p.id !== tempId));
+          setAddingIds((prev) => { const s = new Set(prev); s.delete(title); return s; });
         },
       }
     );
@@ -688,6 +717,7 @@ function CompetitorSection({ bookId, book, competitorData, onUpdate }: {
                         amazonUrl: s.amazonUrl,
                         rating: s.rating,
                         reviewCount: s.reviewCount,
+                        image: s.image,
                       })
                     }
                     disabled={alreadyAdded || isAdding}
@@ -769,11 +799,14 @@ function CompetitorSection({ bookId, book, competitorData, onUpdate }: {
       </div>
 
       {/* Competitor list */}
-      {hasCompetitors && (
+      {(hasCompetitors || pendingCompetitors.length > 0) && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-foreground">
-              Competitors <span className="text-muted-foreground font-normal">({competitors.length})</span>
+              Competitor Books{" "}
+              <span className="text-muted-foreground font-normal">
+                ({competitors.length + pendingCompetitors.length})
+              </span>
             </h3>
             {analyzedCount > 0 && (
               <span className="text-xs text-muted-foreground">{analyzedCount} analysed</span>
@@ -788,6 +821,11 @@ function CompetitorSection({ bookId, book, competitorData, onUpdate }: {
                 isRemoving={removingIds.has(c.id)}
               />
             ))}
+            {pendingCompetitors
+              .filter((p) => !competitors.some((c) => c.title.toLowerCase() === p.title.toLowerCase()))
+              .map((p) => (
+                <PendingCompetitorCard key={p.id} title={p.title} author={p.author} image={p.image} />
+              ))}
           </div>
         </div>
       )}
