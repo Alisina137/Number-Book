@@ -15,6 +15,17 @@ import {
 import { cerebras } from "../lib/cerebras";
 import { generateBlueprint } from "../lib/bookAI";
 import type { AnalysisData, ResourceData, CompetitorData } from "../lib/bookAI";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+  PageBreak,
+  UnderlineType,
+} from "docx";
+import PDFDocument from "pdfkit";
 
 const router: IRouter = Router();
 
@@ -186,6 +197,197 @@ router.get("/books/:id/stats", async (req, res): Promise<void> => {
   });
 });
 
+// Helper: generate DOCX as base64
+async function buildDocxBase64(
+  bookTitle: string,
+  author: string,
+  deepNiche: string,
+  numEntries: number,
+  entries: { title: string; content?: string | null; wordCount?: number | null }[],
+  includeConclusion: boolean
+): Promise<{ base64: string; wordCount: number }> {
+  let wordCount = 0;
+  const children: Paragraph[] = [];
+
+  // Title page
+  children.push(
+    new Paragraph({
+      children: [new TextRun({ text: bookTitle, bold: true, size: 56, color: "1a1a2e" })],
+      heading: HeadingLevel.TITLE,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 240 },
+    })
+  );
+  children.push(
+    new Paragraph({
+      children: [new TextRun({ text: `By ${author}`, italics: true, size: 28, color: "555555" })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 480 },
+    })
+  );
+  children.push(
+    new Paragraph({
+      children: [new TextRun({ text: `A collection of ${numEntries} ${deepNiche} entries`, size: 22, color: "888888" })],
+      alignment: AlignmentType.CENTER,
+    })
+  );
+
+  // Page break before TOC
+  children.push(new Paragraph({ children: [new PageBreak()] }));
+
+  // Table of Contents heading
+  children.push(
+    new Paragraph({
+      children: [new TextRun({ text: "Table of Contents", bold: true, size: 36 })],
+      heading: HeadingLevel.HEADING_1,
+      spacing: { after: 200 },
+    })
+  );
+  entries.forEach((e, i) => {
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: `${i + 1}.  ${e.title}`, size: 22 })],
+        spacing: { after: 100 },
+      })
+    );
+  });
+
+  // Entries
+  entries.forEach((e, i) => {
+    children.push(new Paragraph({ children: [new PageBreak()] }));
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: `${i + 1}. ${e.title}`, bold: true, size: 36 })],
+        heading: HeadingLevel.HEADING_1,
+        spacing: { after: 240 },
+      })
+    );
+    const body = e.content ?? "Content not generated.";
+    body.split(/\n+/).forEach((para) => {
+      if (para.trim()) {
+        children.push(
+          new Paragraph({
+            children: [new TextRun({ text: para.trim(), size: 24 })],
+            spacing: { after: 160 },
+          })
+        );
+      }
+    });
+    wordCount += e.wordCount ?? 0;
+  });
+
+  if (includeConclusion) {
+    children.push(new Paragraph({ children: [new PageBreak()] }));
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: "Conclusion", bold: true, size: 36 })],
+        heading: HeadingLevel.HEADING_1,
+        spacing: { after: 240 },
+      })
+    );
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: "Thank you for reading this collection. We hope it has been informative, inspiring, and valuable to you.", size: 24 })],
+      })
+    );
+  }
+
+  // About the author
+  children.push(new Paragraph({ children: [new PageBreak()] }));
+  children.push(
+    new Paragraph({
+      children: [new TextRun({ text: "About the Author", bold: true, size: 36 })],
+      heading: HeadingLevel.HEADING_1,
+      spacing: { after: 240 },
+    })
+  );
+  children.push(
+    new Paragraph({
+      children: [new TextRun({ text: author, size: 24 })],
+    })
+  );
+
+  const doc = new Document({
+    sections: [{ properties: {}, children }],
+    styles: {
+      default: {
+        document: {
+          run: { font: "Calibri", size: 24 },
+        },
+      },
+    },
+  });
+
+  const buffer = await Packer.toBuffer(doc);
+  return { base64: buffer.toString("base64"), wordCount };
+}
+
+// Helper: generate PDF as base64
+function buildPdfBase64(
+  bookTitle: string,
+  author: string,
+  deepNiche: string,
+  numEntries: number,
+  entries: { title: string; content?: string | null; wordCount?: number | null }[],
+  includeConclusion: boolean
+): Promise<{ base64: string; wordCount: number }> {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument({ margin: 72, size: "A4", bufferPages: true });
+    const chunks: Buffer[] = [];
+    let wordCount = 0;
+
+    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
+    doc.on("error", reject);
+    doc.on("end", () => {
+      const buffer = Buffer.concat(chunks);
+      resolve({ base64: buffer.toString("base64"), wordCount });
+    });
+
+    // Title page
+    doc.moveDown(4);
+    doc.fontSize(28).font("Helvetica-Bold").fillColor("#1a1a2e").text(bookTitle, { align: "center" });
+    doc.moveDown(1);
+    doc.fontSize(14).font("Helvetica-Oblique").fillColor("#555555").text(`By ${author}`, { align: "center" });
+    doc.moveDown(0.5);
+    doc.fontSize(11).font("Helvetica").fillColor("#888888").text(`A collection of ${numEntries} ${deepNiche} entries`, { align: "center" });
+
+    // Table of contents
+    doc.addPage();
+    doc.fontSize(20).font("Helvetica-Bold").fillColor("#1a1a2e").text("Table of Contents");
+    doc.moveDown(0.8);
+    entries.forEach((e, i) => {
+      doc.fontSize(11).font("Helvetica").fillColor("#222222").text(`${i + 1}.  ${e.title}`, { lineGap: 4 });
+    });
+
+    // Entries
+    entries.forEach((e, i) => {
+      doc.addPage();
+      doc.fontSize(18).font("Helvetica-Bold").fillColor("#1a1a2e").text(`${i + 1}. ${e.title}`);
+      doc.moveDown(0.6);
+      const body = e.content ?? "Content not generated.";
+      doc.fontSize(11).font("Helvetica").fillColor("#222222").text(body, { align: "justify", lineGap: 3 });
+      wordCount += e.wordCount ?? 0;
+    });
+
+    if (includeConclusion) {
+      doc.addPage();
+      doc.fontSize(18).font("Helvetica-Bold").fillColor("#1a1a2e").text("Conclusion");
+      doc.moveDown(0.6);
+      doc.fontSize(11).font("Helvetica").fillColor("#222222").text(
+        "Thank you for reading this collection. We hope it has been informative, inspiring, and valuable to you.",
+        { align: "justify", lineGap: 3 }
+      );
+    }
+
+    doc.addPage();
+    doc.fontSize(18).font("Helvetica-Bold").fillColor("#1a1a2e").text("About the Author");
+    doc.moveDown(0.6);
+    doc.fontSize(11).font("Helvetica").fillColor("#222222").text(author);
+
+    doc.end();
+  });
+}
+
 // Export book
 router.post("/books/:id/export", async (req, res): Promise<void> => {
   const params = ExportBookParams.safeParse(req.params);
@@ -211,62 +413,39 @@ router.post("/books/:id/export", async (req, res): Promise<void> => {
     .where(eq(entriesTable.bookId, book.id))
     .orderBy(entriesTable.position);
 
-  const { format, includeConclusion, authorName } = parsed.data;
+  const { format, includeConclusion = true, authorName } = parsed.data;
   const bookTitle = book.title ?? `${book.deepNiche} ${book.niche} Book`;
   const author = authorName ?? book.authorName ?? "Anonymous";
+  const safeSlug = bookTitle.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
-  let content = "";
-  let wordCount = 0;
-
-  if (format === "markdown") {
-    content += `# ${bookTitle}\n\n`;
-    content += `**Author:** ${author}\n\n`;
-    content += `---\n\n`;
-    content += `## Introduction\n\nWelcome to this collection of ${book.numEntries} unique ${book.deepNiche} entries.\n\n`;
-    content += `---\n\n`;
-    content += `## Table of Contents\n\n`;
-    entries.forEach((e, i) => {
-      content += `${i + 1}. ${e.title}\n`;
-    });
-    content += `\n---\n\n`;
-    entries.forEach((e, i) => {
-      content += `## ${i + 1}. ${e.title}\n\n`;
-      content += `${e.content ?? "_Content not generated_"}\n\n`;
-      content += `---\n\n`;
-      wordCount += e.wordCount ?? 0;
-    });
-    if (includeConclusion) {
-      content += `## Conclusion\n\nThank you for reading this collection.\n\n`;
+  try {
+    if (format === "docx") {
+      const { base64, wordCount } = await buildDocxBase64(
+        bookTitle, author, book.deepNiche, book.numEntries, entries, includeConclusion
+      );
+      res.json({
+        format,
+        content: base64,
+        filename: `${safeSlug}.docx`,
+        mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        wordCount,
+      });
+    } else {
+      const { base64, wordCount } = await buildPdfBase64(
+        bookTitle, author, book.deepNiche, book.numEntries, entries, includeConclusion
+      );
+      res.json({
+        format,
+        content: base64,
+        filename: `${safeSlug}.pdf`,
+        mimeType: "application/pdf",
+        wordCount,
+      });
     }
-    content += `## About the Author\n\n${author}\n`;
-  } else {
-    content += `${bookTitle.toUpperCase()}\n`;
-    content += `By ${author}\n\n`;
-    content += `${"=".repeat(60)}\n\n`;
-    content += `INTRODUCTION\n\n`;
-    content += `Welcome to this collection of ${book.numEntries} unique ${book.deepNiche} entries.\n\n`;
-    content += `${"=".repeat(60)}\n\n`;
-    content += `TABLE OF CONTENTS\n\n`;
-    entries.forEach((e, i) => {
-      content += `${i + 1}. ${e.title}\n`;
-    });
-    content += `\n${"=".repeat(60)}\n\n`;
-    entries.forEach((e, i) => {
-      content += `${i + 1}. ${e.title.toUpperCase()}\n\n`;
-      content += `${e.content ?? "Content not generated"}\n\n`;
-      content += `${"-".repeat(40)}\n\n`;
-      wordCount += e.wordCount ?? 0;
-    });
-    if (includeConclusion) {
-      content += `CONCLUSION\n\nThank you for reading this collection.\n\n`;
-    }
-    content += `ABOUT THE AUTHOR\n\n${author}\n`;
+  } catch (err: unknown) {
+    const message = (err as { message?: string }).message ?? "Unknown error";
+    res.status(500).json({ error: `Export failed: ${message}` });
   }
-
-  const ext = format === "markdown" ? "md" : "txt";
-  const filename = `${bookTitle.toLowerCase().replace(/\s+/g, "-")}.${ext}`;
-
-  res.json({ format, content, filename, wordCount });
 });
 
 export default router;

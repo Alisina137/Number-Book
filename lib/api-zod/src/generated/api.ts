@@ -426,7 +426,7 @@ export const ExportBookParams = zod.object({
 })
 
 export const ExportBookBody = zod.object({
-  "format": zod.enum(['txt', 'markdown']),
+  "format": zod.enum(['docx', 'pdf']),
   "includeConclusion": zod.boolean().optional(),
   "authorName": zod.string().optional()
 })
@@ -435,6 +435,7 @@ export const ExportBookResponse = zod.object({
   "format": zod.string(),
   "content": zod.string(),
   "filename": zod.string(),
+  "mimeType": zod.string(),
   "wordCount": zod.number().optional()
 })
 

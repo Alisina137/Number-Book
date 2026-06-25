@@ -720,7 +720,7 @@ components:
       properties:
         format:
           type: string
-          enum: [txt, markdown]
+          enum: [docx, pdf]
         includeConclusion:
           type: boolean
         authorName:
@@ -728,13 +728,15 @@ components:
 
     ExportResult:
       type: object
-      required: [format, content, filename]
+      required: [format, content, filename, mimeType]
       properties:
         format:
           type: string
         content:
           type: string
         filename:
+          type: string
+        mimeType:
           type: string
         wordCount:
           type: integer

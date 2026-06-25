@@ -10,6 +10,6 @@ export type ExportRequestFormat = typeof ExportRequestFormat[keyof typeof Export
 
 
 export const ExportRequestFormat = {
-  txt: 'txt',
-  markdown: 'markdown',
+  docx: 'docx',
+  pdf: 'pdf',
 } as const;

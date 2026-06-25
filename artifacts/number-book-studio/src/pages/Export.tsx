@@ -15,19 +15,28 @@ import { useToast } from "@/hooks/use-toast";
 import { Download, FileText, Loader2 } from "lucide-react";
 import { BookStepNav } from "@/components/BookStepNav";
 
-type ExportFormat = "txt" | "markdown";
+type ExportFormat = "docx" | "pdf";
 
-const FORMAT_OPTIONS: { value: ExportFormat; label: string; desc: string }[] = [
-  { value: "txt", label: "Plain Text (.txt)", desc: "Clean text, works everywhere" },
-  { value: "markdown", label: "Markdown (.md)", desc: "Formatted with headers and structure" },
+const FORMAT_OPTIONS: { value: ExportFormat; label: string; desc: string; icon: string }[] = [
+  { value: "docx", label: "Word Document (.docx)", desc: "Opens in Microsoft Word & Google Docs", icon: "W" },
+  { value: "pdf", label: "PDF Document (.pdf)", desc: "Print-ready, works on any device", icon: "P" },
 ];
+
+function base64ToBlob(base64: string, mimeType: string): Blob {
+  const binaryStr = atob(base64);
+  const bytes = new Uint8Array(binaryStr.length);
+  for (let i = 0; i < binaryStr.length; i++) {
+    bytes[i] = binaryStr.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: mimeType });
+}
 
 export default function Export() {
   const { id } = useParams<{ id: string }>();
   const bookId = Number(id);
   const { toast } = useToast();
 
-  const [format, setFormat] = useState<ExportFormat>("txt");
+  const [format, setFormat] = useState<ExportFormat>("docx");
   const [includeConclusion, setIncludeConclusion] = useState(true);
   const [authorName, setAuthorName] = useState("");
 
@@ -48,7 +57,7 @@ export default function Export() {
       },
       {
         onSuccess: (result) => {
-          const blob = new Blob([result.content], { type: "text/plain" });
+          const blob = base64ToBlob(result.content, result.mimeType);
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
           a.href = url;
@@ -120,14 +129,16 @@ export default function Export() {
                     <button
                       key={opt.value}
                       onClick={() => setFormat(opt.value)}
-                      className={`w-full text-left flex items-start gap-3 p-3 rounded-lg border transition-colors ${
+                      className={`w-full text-left flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                         format === opt.value
                           ? "border-primary bg-accent/50"
                           : "border-border hover:border-muted-foreground"
                       }`}
                       data-testid={`format-${opt.value}`}
                     >
-                      <FileText className={`w-4 h-4 mt-0.5 flex-shrink-0 ${format === opt.value ? "text-primary" : "text-muted-foreground"}`} />
+                      <span className={`w-8 h-8 rounded flex items-center justify-center text-xs font-bold flex-shrink-0 ${
+                        format === opt.value ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                      }`}>{opt.icon}</span>
                       <div>
                         <p className={`text-sm font-medium ${format === opt.value ? "text-primary" : "text-foreground"}`}>{opt.label}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">{opt.desc}</p>
@@ -174,7 +185,7 @@ export default function Export() {
               ) : (
                 <Download className="w-4 h-4 mr-2" />
               )}
-              {exportBook.isPending ? "Assembling book..." : "Download Book"}
+              {exportBook.isPending ? "Assembling book..." : `Download ${format.toUpperCase()}`}
             </Button>
           </motion.div>
         </div>
