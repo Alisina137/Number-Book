@@ -8,6 +8,7 @@ import NewBook from "@/pages/NewBook";
 import BookInfo from "@/pages/BookInfo";
 import Analysis from "@/pages/Analysis";
 import Resources from "@/pages/Resources";
+import Structure from "@/pages/Structure";
 import Blueprint from "@/pages/Blueprint";
 import Write from "@/pages/Write";
 import Quality from "@/pages/Quality";
@@ -27,6 +28,7 @@ function Router() {
         <Route path="/books/:id/info" component={BookInfo} />
         <Route path="/books/:id/analysis" component={Analysis} />
         <Route path="/books/:id/resources" component={Resources} />
+        <Route path="/books/:id/structure" component={Structure} />
         <Route path="/books/:id/blueprint" component={Blueprint} />
         <Route path="/books/:id/write" component={Write} />
         <Route path="/books/:id/quality" component={Quality} />

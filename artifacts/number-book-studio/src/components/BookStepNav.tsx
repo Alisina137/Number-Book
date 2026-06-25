@@ -1,10 +1,11 @@
 import { useLocation } from "wouter";
-import { Info, FlaskConical, Library, BookOpen, PenLine, ShieldCheck, Download, ChevronLeft } from "lucide-react";
+import { Info, FlaskConical, Library, Layers, BookOpen, PenLine, ShieldCheck, Download, ChevronLeft } from "lucide-react";
 
 const STEPS = [
   { key: "info", label: "Book Info", icon: Info, path: "info" },
   { key: "analysis", label: "Analysis", icon: FlaskConical, path: "analysis" },
   { key: "resources", label: "Resources", icon: Library, path: "resources" },
+  { key: "structure", label: "Structure", icon: Layers, path: "structure" },
   { key: "blueprint", label: "Blueprint", icon: BookOpen, path: "blueprint" },
   { key: "write", label: "Write", icon: PenLine, path: "write" },
   { key: "quality", label: "Quality", icon: ShieldCheck, path: "quality" },
@@ -16,6 +17,7 @@ const STEP_STATUSES: Record<string, string> = {
   info: "setup",
   analysis: "setup",
   resources: "analysis",
+  structure: "resources",
   blueprint: "resources",
   write: "blueprint",
   quality: "writing",
@@ -24,7 +26,7 @@ const STEP_STATUSES: Record<string, string> = {
 
 interface BookStepNavProps {
   bookId: number;
-  current: "info" | "analysis" | "resources" | "blueprint" | "write" | "quality" | "export";
+  current: "info" | "analysis" | "resources" | "structure" | "blueprint" | "write" | "quality" | "export";
   bookStatus?: string;
 }
 

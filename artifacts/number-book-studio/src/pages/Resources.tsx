@@ -393,10 +393,10 @@ export default function Resources() {
                   <Button
                     size="lg"
                     className="flex-1"
-                    onClick={() => setLocation(`/books/${bookId}/blueprint`)}
+                    onClick={() => setLocation(`/books/${bookId}/structure`)}
                     disabled={generateResourcesMutation.isPending}
                   >
-                    Generate Blueprint
+                    Continue to Structure
                     <ArrowRight className="w-4 h-4 ml-2" />
                   </Button>
                 </div>
