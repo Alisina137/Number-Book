@@ -245,6 +245,7 @@ export default function NewBook() {
   const [subNicheOptions, setSubNicheOptions] = useState<string[]>([]);
   const [deepNicheOptions, setDeepNicheOptions] = useState<string[]>([]);
   const [deepNicheError, setDeepNicheError] = useState<string | null>(null);
+  const [deepNicheSuggestions, setDeepNicheSuggestions] = useState<string[]>([]);
 
   const suggestDeepNiche = useSuggestDeepNiche();
 
@@ -277,6 +278,7 @@ export default function NewBook() {
     form.setValue("deepNiche", "");
     setDeepNicheOptions([]);
     setDeepNicheError(null);
+    setDeepNicheSuggestions([]);
   };
 
   const handleSuggestDeepNiche = () => {
@@ -284,19 +286,15 @@ export default function NewBook() {
     const subNiche = form.getValues("subNiche");
     if (!niche || !subNiche) return;
     setDeepNicheError(null);
+    setDeepNicheSuggestions([]);
     suggestDeepNiche.mutate(
       { data: { niche, subNiche } },
       {
         onSuccess: (data) => {
-          const incoming = data.suggestions ?? [];
-          setDeepNicheOptions((prev) => {
-            const existing = new Set(prev);
-            const fresh = incoming.filter((s) => !existing.has(s));
-            return [...prev, ...fresh];
-          });
+          setDeepNicheSuggestions(data.suggestions ?? []);
         },
         onError: () => {
-          setDeepNicheError("AI suggestion failed — add your own below");
+          setDeepNicheError("AI suggestion failed — try again");
         },
       }
     );
@@ -413,6 +411,25 @@ export default function NewBook() {
                         </button>
                       )}
                     </div>
+                    {deepNicheSuggestions.length > 0 && (
+                      <div className="flex flex-col gap-1.5 mt-1">
+                        <p className="text-[11px] text-muted-foreground">Click a suggestion to use it</p>
+                        {deepNicheSuggestions.map((s, i) => (
+                          <button
+                            key={i}
+                            type="button"
+                            onClick={() => {
+                              field.onChange(s);
+                              setDeepNicheOptions((prev) => prev.includes(s) ? prev : [...prev, s]);
+                              setDeepNicheSuggestions([]);
+                            }}
+                            className="w-full text-left text-sm px-3 py-2 rounded-lg bg-muted/60 hover:bg-accent hover:text-accent-foreground border border-border transition-colors"
+                          >
+                            {s}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                     <FormControl>
                       <NicheSelect
                         value={field.value ?? ""}
