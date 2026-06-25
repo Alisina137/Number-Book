@@ -208,93 +208,6 @@ export default function BookInfo() {
                 />
               </div>
 
-              <div className="bg-card border border-card-border rounded-xl p-5 space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="font-medium text-sm text-foreground">Book Details (optional)</h2>
-                  <button
-                    type="button"
-                    disabled={suggestTitles.isPending}
-                    onClick={() => {
-                      setTitleSuggestions([]);
-                      suggestTitles.mutate(
-                        { id: bookId },
-                        {
-                          onSuccess: (data) => {
-                            const suggestions = (data as { suggestions?: typeof titleSuggestions }).suggestions ?? [];
-                            setTitleSuggestions(suggestions);
-                          },
-                          onError: () => {
-                            toast({ title: "Title suggestion failed", variant: "destructive" });
-                          },
-                        }
-                      );
-                    }}
-                    className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {suggestTitles.isPending ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <Sparkles className="w-3.5 h-3.5" />
-                    )}
-                    {suggestTitles.isPending ? "Suggesting…" : "Suggest with AI"}
-                  </button>
-                </div>
-
-                {titleSuggestions.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground">Click a suggestion to use it</p>
-                    {titleSuggestions.map((s, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => {
-                          form.setValue("title", s.fullTitle);
-                          setTitleSuggestions([]);
-                        }}
-                        className="w-full text-left bg-muted/60 hover:bg-accent hover:text-accent-foreground border border-border rounded-lg p-3 transition-colors group"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium leading-snug">{s.title}</p>
-                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{s.subtitle}</p>
-                            <p className="text-xs text-muted-foreground/70 mt-1 italic">{s.rationale}</p>
-                          </div>
-                          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent-foreground flex-shrink-0 mt-0.5" />
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Book Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. 100 Amazing Ocean Facts" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="authorName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Author Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Jane Smith" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
               <div className="bg-card border border-card-border rounded-xl p-5 grid grid-cols-2 gap-4">
                 <h2 className="col-span-2 font-medium text-sm text-foreground">Audience & Tone</h2>
 
@@ -406,6 +319,93 @@ export default function BookInfo() {
                     )}
                   />
                 </div>
+              </div>
+
+              <div className="bg-card border border-card-border rounded-xl p-5 space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="font-medium text-sm text-foreground">Book Details (optional)</h2>
+                  <button
+                    type="button"
+                    disabled={suggestTitles.isPending}
+                    onClick={() => {
+                      setTitleSuggestions([]);
+                      suggestTitles.mutate(
+                        { id: bookId },
+                        {
+                          onSuccess: (data) => {
+                            const suggestions = (data as { suggestions?: typeof titleSuggestions }).suggestions ?? [];
+                            setTitleSuggestions(suggestions);
+                          },
+                          onError: () => {
+                            toast({ title: "Title suggestion failed", variant: "destructive" });
+                          },
+                        }
+                      );
+                    }}
+                    className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {suggestTitles.isPending ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5" />
+                    )}
+                    {suggestTitles.isPending ? "Suggesting…" : "Suggest with AI"}
+                  </button>
+                </div>
+
+                {titleSuggestions.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-xs text-muted-foreground">Click a suggestion to use it</p>
+                    {titleSuggestions.map((s, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          form.setValue("title", s.fullTitle);
+                          setTitleSuggestions([]);
+                        }}
+                        className="w-full text-left bg-muted/60 hover:bg-accent hover:text-accent-foreground border border-border rounded-lg p-3 transition-colors group"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium leading-snug">{s.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{s.subtitle}</p>
+                            <p className="text-xs text-muted-foreground/70 mt-1 italic">{s.rationale}</p>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-accent-foreground flex-shrink-0 mt-0.5" />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Book Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. 100 Amazing Ocean Facts" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="authorName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Author Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. Jane Smith" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="flex gap-3">
