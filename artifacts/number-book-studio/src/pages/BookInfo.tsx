@@ -326,30 +326,41 @@ export default function BookInfo() {
                   <h2 className="font-medium text-sm text-foreground">Book Details (optional)</h2>
                   <button
                     type="button"
-                    disabled={suggestTitles.isPending}
+                    disabled={suggestTitles.isPending || updateBook.isPending}
                     onClick={() => {
                       setTitleSuggestions([]);
-                      suggestTitles.mutate(
-                        { id: bookId },
+                      const values = form.getValues();
+                      updateBook.mutate(
+                        { id: bookId, data: { ...values, deepNiche: values.deepNiche ?? "" } },
                         {
-                          onSuccess: (data) => {
-                            const suggestions = (data as { suggestions?: typeof titleSuggestions }).suggestions ?? [];
-                            setTitleSuggestions(suggestions);
+                          onSuccess: () => {
+                            suggestTitles.mutate(
+                              { id: bookId },
+                              {
+                                onSuccess: (data) => {
+                                  const suggestions = (data as { suggestions?: typeof titleSuggestions }).suggestions ?? [];
+                                  setTitleSuggestions(suggestions);
+                                },
+                                onError: () => {
+                                  toast({ title: "Title suggestion failed", variant: "destructive" });
+                                },
+                              }
+                            );
                           },
                           onError: () => {
-                            toast({ title: "Title suggestion failed", variant: "destructive" });
+                            toast({ title: "Failed to save before suggesting", variant: "destructive" });
                           },
                         }
                       );
                     }}
                     className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
-                    {suggestTitles.isPending ? (
+                    {(suggestTitles.isPending || updateBook.isPending) ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
                     ) : (
                       <Sparkles className="w-3.5 h-3.5" />
                     )}
-                    {suggestTitles.isPending ? "Suggesting…" : "Suggest with AI"}
+                    {suggestTitles.isPending ? "Suggesting…" : updateBook.isPending ? "Saving…" : "Suggest with AI"}
                   </button>
                 </div>
 

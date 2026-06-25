@@ -51,30 +51,32 @@ router.post("/books/:id/suggest-titles", async (req, res): Promise<void> => {
     ? `\nTop competitor titles in this space:\n${topCompetitorTitles.map((t) => `- ${t}`).join("\n")}`
     : "";
 
-  const prompt = `You are a KDP (Kindle Direct Publishing) book title expert who understands Amazon market dynamics and what makes titles rank and sell.
+  const nicheLabel = [book.niche, book.subNiche, book.deepNiche].filter(Boolean).join(" › ");
+
+  const prompt = `You are a KDP (Kindle Direct Publishing) book title expert. Generate titles that are laser-focused on the exact book details provided — do NOT use generic filler words or approximate numbers.
 
 Book details:
-- Niche: ${book.niche}
-- Sub-Niche: ${book.subNiche}
-- Deep Niche: ${book.deepNiche || "not specified"}
+- Full niche: ${nicheLabel}
 - Audience: ${book.audience}
 - Tone: ${book.tone}
-- Number of Entries: ${book.numEntries}${competitorContext}
+- Exact number of entries/items in the book: ${book.numEntries}${competitorContext}
 
-Generate exactly 3 compelling, commercially-proven KDP book title suggestions. Each title should:
-- Use a proven KDP formula (e.g. number-led, promise-based, audience-specific, curiosity-driven)
-- Stand out from competitors while fitting market expectations
-- Have a clear main title (short, punchy) and a descriptive subtitle that adds specificity and keywords
-- Appeal directly to the ${book.audience} audience with a ${book.tone} tone
-- Be realistic and something a real author would publish on Amazon
+Rules you MUST follow:
+1. If using a number-led title, the number MUST be exactly ${book.numEntries} — not rounded, not approximated.
+2. Every title must directly reflect the specific niche "${nicheLabel}" — avoid generic words like "Amazing", "Fast", "Quick", "Ultimate" unless the tone is "casual" or "funny".
+3. The subtitle must add real specificity: who the book is for, what they gain, or how it is structured.
+4. Match the tone strictly: ${book.tone} — e.g. if educational, be informative and clear; if funny, be playful; if inspirational, be motivating.
+5. Titles must feel like real Amazon bestsellers in the "${book.subNiche}" space.
 
-Return ONLY valid JSON in this exact format, no markdown, no explanation:
+Generate exactly 3 title suggestions.
+
+Return ONLY valid JSON, no markdown, no explanation:
 [
   {
     "title": "Main Title Here",
-    "subtitle": "Subtitle That Explains the Book Value and Adds Keywords",
-    "fullTitle": "Main Title Here: Subtitle That Explains the Book Value and Adds Keywords",
-    "rationale": "One sentence explaining why this title will sell"
+    "subtitle": "Specific subtitle that adds value and keywords",
+    "fullTitle": "Main Title Here: Specific subtitle that adds value and keywords",
+    "rationale": "One sentence explaining why this title fits this exact book"
   }
 ]`;
 
