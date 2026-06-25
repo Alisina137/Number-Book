@@ -1,7 +1,7 @@
 import { Router, type IRouter } from "express";
 import { eq } from "drizzle-orm";
 import { db, booksTable } from "@workspace/db";
-import { cerebras, CEREBRAS_MODEL } from "../lib/cerebras";
+import { groq, GROQ_MODEL } from "../lib/groq";
 
 const router: IRouter = Router();
 
@@ -79,8 +79,8 @@ Return ONLY valid JSON in this exact format, no markdown, no explanation:
 ]`;
 
   try {
-    const response = await cerebras.chat.completions.create({
-      model: CEREBRAS_MODEL,
+    const response = await groq.chat.completions.create({
+      model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.85,
       max_tokens: 600,

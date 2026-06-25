@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { cerebras, CEREBRAS_MODEL } from "../lib/cerebras";
+import { groq, GROQ_MODEL } from "../lib/groq";
 
 const router: IRouter = Router();
 
@@ -56,11 +56,11 @@ Respond with ONLY a numbered list, nothing else:
 5. `;
 
   try {
-    const response = await cerebras.chat.completions.create({
-      model: CEREBRAS_MODEL,
+    const response = await groq.chat.completions.create({
+      model: GROQ_MODEL,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.85,
-      max_tokens: 250,
+      max_tokens: 500,
     });
 
     const raw = response.choices[0]?.message?.content ?? "";
